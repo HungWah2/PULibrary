@@ -1,0 +1,86 @@
+@model List<PULibrary.Models.Book>
+@{
+    ViewData["Title"] = "Browse Catalog";
+    var categories = ViewBag.AllCategories as List<string> ?? new();
+    string selectedCat = ViewBag.Category as string ?? "";
+    string searchQuery = ViewBag.Search as string ?? "";
+}
+
+<div class="jy-page-heading">
+    <div class="jy-section-label">READER CATALOG / DISCOVER</div>
+    <div class="jy-title-row">
+        <h1 class="jy-page-title">Explore the library collection.</h1>
+        <a asp-controller="User" asp-action="Profile" class="jy-btn-secondary">My loans &amp; account →</a>
+    </div>
+    <div class="jy-page-subtitle">Search books, check shelf availability and place holds on popular titles.</div>
+</div>
+
+<!-- Search & filter bar -->
+<div class="jy-panel" style="padding: 16px 20px;">
+    <form method="get" asp-action="Index" class="d-flex flex-column gap-3">
+        <div class="d-flex gap-3 align-items-center">
+            <div class="input-group" style="flex: 1;">
+                <span class="input-group-text" style="background-color:#fffdf8; border-color:var(--jy-border);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6c746b" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </span>
+                <input type="text" name="search" value="@searchQuery" class="form-control jy-form-control" placeholder="Search by title, ISBN, or author..." />
+            </div>
+            <button type="submit" class="jy-btn-primary" style="height: 42px;">Search Collection</button>
+        </div>
+
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <span style="font-size: 12px; color: var(--jy-text-muted); font-weight: 600;">FILTER BY CATEGORY:</span>
+            <a asp-action="Index" asp-route-search="@searchQuery" class="@(string.IsNullOrEmpty(selectedCat) ? "jy-btn-primary" : "jy-btn-secondary")" style="font-size: 12px; padding: 4px 12px;">All</a>
+            @foreach (var c in categories)
+            {
+                <a asp-action="Index" asp-route-category="@c" asp-route-search="@searchQuery" class="@(selectedCat == c ? "jy-btn-primary" : "jy-btn-secondary")" style="font-size: 12px; padding: 4px 12px;">@c</a>
+            }
+        </div>
+    </form>
+</div>
+
+<!-- Books Grid / Cards -->
+<div class="row g-4">
+    @foreach (var book in Model)
+    {
+        int totalCopies = book.Copies.Count;
+        int availableCopies = book.Copies.Count(c => c.Status == "Available");
+        var authors = book.AssociateBookAuthors.Select(a => a.Author?.AuthorName).Where(n => !string.IsNullOrEmpty(n)).ToList();
+
+        <div class="col-md-6 col-lg-4">
+            <div class="jy-panel h-100 justify-content-between">
+                <div class="d-flex gap-3 align-items-start">
+                    <!-- Book cover -->
+                    <div class="jy-book-cover-thumb" style="width: 58px; height: 80px; padding: 6px;">
+                        <div class="jy-cover-title" style="font-size: 8px;">@book.Title</div>
+                        <div class="jy-cover-rule"></div>
+                        <div class="jy-cover-author" style="font-size: 5px;">@(authors.FirstOrDefault() ?? "")</div>
+                    </div>
+
+                    <div style="flex: 1; min-width: 0;">
+                        <a asp-action="Detail" asp-route-id="@book.BookId" style="text-decoration: none;">
+                            <h3 style="font-family: var(--font-heading); font-size: 18px; color: var(--jy-primary-green); margin-bottom: 4px; line-height: 1.25;">@book.Title</h3>
+                        </a>
+                        <div style="font-size: 13px; color: var(--jy-text-muted); margin-bottom: 6px;">
+                            @(authors.Any() ? string.Join(", ", authors) : "Unknown author")
+                        </div>
+                        <div style="font-size: 12px; color: var(--jy-text-muted); margin-bottom: 8px;">
+                            Language: @book.Language · Edition @book.Edition
+                        </div>
+
+                        <div>
+                            <span class="jy-badge @(availableCopies > 0 ? "jy-badge-available" : "jy-badge-waiting")">
+                                <span class="jy-badge-dot"></span> @availableCopies of @totalCopies available
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-3" style="border-top: 1px solid var(--jy-border);">
+                    <span style="font-size: 12px; color: var(--jy-text-muted);">Book #@book.BookId</span>
+                    <a asp-action="Detail" asp-route-id="@book.BookId" class="jy-btn-secondary" style="font-size: 12px;">View &amp; Reserve →</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>

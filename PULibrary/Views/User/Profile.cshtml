@@ -1,0 +1,315 @@
+@model PULibrary.Models.User
+@{
+    ViewData["Title"] = $"{Model.Name} - Profile";
+    var activeLoans = ViewBag.ActiveLoans as List<PULibrary.Models.Loan> ?? new();
+    var returnedLoans = ViewBag.ReturnedLoans as List<PULibrary.Models.Loan> ?? new();
+    var reservations = ViewBag.Reservations as List<PULibrary.Models.Reservation> ?? new();
+
+    // Get initials for avatar
+    string initials = string.Join("", Model.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => s[0])).ToUpper();
+    if (string.IsNullOrEmpty(initials)) initials = "U";
+}
+
+<div class="jy-page-heading">
+    <div class="jy-section-label">USER DIRECTORY / USER @Model.UserId</div>
+    <div class="jy-title-row">
+        <h1 class="jy-page-title">@Model.Name</h1>
+        <div class="d-flex gap-2">
+            <a asp-controller="Catalog" asp-action="Index" class="jy-btn-primary">Browse catalog →</a>
+            <a asp-controller="Account" asp-action="SignIn" class="jy-btn-secondary">Switch account</a>
+        </div>
+    </div>
+    <div class="jy-page-subtitle">A connected reader record: profile, role, loans and reservations.</div>
+</div>
+
+<!-- Profile and Roles Split Row (matching Figma node 1:1049) -->
+<div class="row g-4">
+    <!-- Reader Profile Panel -->
+    <div class="col-lg-7">
+        <div class="jy-panel h-100">
+            <div class="jy-panel-header">
+                <div>
+                    <div class="jy-panel-heading-title">Reader profile</div>
+                </div>
+            </div>
+
+            <!-- Identity row with 64px avatar -->
+            <div class="d-flex align-items-center gap-3">
+                <div class="jy-avatar" style="width: 64px; height: 64px; font-size: 25px; font-family: var(--font-heading); color: var(--jy-primary-green);">
+                    @initials
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; font-size: 16px; color: var(--jy-primary-dark);">
+                        @Model.Name · User @Model.UserId
+                    </div>
+                    <div style="font-size: 13px; color: var(--jy-text-muted);">
+                        Username @Model.Username
+                    </div>
+                </div>
+                <div>
+                    @if (Model.Status == "Active")
+                    {
+                        <span class="jy-badge jy-badge-available">
+                            <span class="jy-badge-dot"></span> Active
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="jy-badge jy-badge-overdue">
+                            <span class="jy-badge-dot"></span> Suspended
+                        </span>
+                    }
+                </div>
+            </div>
+
+            <!-- Contact info -->
+            <div class="d-flex gap-4 pt-2">
+                <div style="flex: 1;">
+                    <div class="jy-inv-label">EMAIL</div>
+                    <div style="font-size: 14px; font-weight: 500;">@Model.Email</div>
+                </div>
+                <div style="flex: 1;">
+                    <div class="jy-inv-label">PHONE</div>
+                    <div style="font-size: 14px; font-weight: 500;">@Model.Phone</div>
+                </div>
+            </div>
+
+            <!-- Timestamps -->
+            <div class="d-flex gap-4 pt-2" style="border-top: 1px solid var(--jy-border);">
+                <div style="flex: 1;">
+                    <div class="jy-inv-label">CREATED AT</div>
+                    <div style="font-size: 13px; color: var(--jy-text-muted);">@Model.CreatedAt.ToString("dd MMM yyyy HH:mm")</div>
+                </div>
+                <div style="flex: 1;">
+                    <div class="jy-inv-label">UPDATED AT</div>
+                    <div style="font-size: 13px; color: var(--jy-text-muted);">@(Model.UpdatedAt?.ToString("dd MMM yyyy HH:mm") ?? "—")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assigned Role Panel (matching Figma node 1:1077) -->
+    <div class="col-lg-5">
+        <div class="jy-panel h-100 justify-content-between">
+            <div>
+                <div class="jy-panel-header mb-3">
+                    <div>
+                        <div class="jy-panel-heading-title">Assigned role</div>
+                        <div class="jy-panel-heading-desc">User @Model.UserId → Role @Model.RoleId</div>
+                    </div>
+                </div>
+
+                <div style="font-weight: 600; font-size: 16px; color: var(--jy-primary-dark); margin-bottom: 4px;">
+                    @Model.Role?.RoleName · Role @Model.RoleId
+                </div>
+                <div style="font-size: 13px; color: var(--jy-text-muted); line-height: 1.4;">
+                    Policy @Model.Role?.Policy?.PolicyId · @Model.Role?.Policy?.LoanDays days loan duration · @Model.Role?.Policy?.MaxLoans concurrent loans · @Model.Role?.Policy?.MaxRenewals renewals allowed
+                </div>
+            </div>
+
+            <div class="jy-tip-box mt-3" style="padding: 12px; font-size: 12px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                <span>Terms apply automatically to all borrow requests and renewals.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Borrowing: Active loans (matching Figma node 1:1092) -->
+<div class="jy-panel mt-4">
+    <div class="jy-panel-header">
+        <div>
+            <div class="jy-panel-heading-title">Current borrowing · @activeLoans.Count active loans</div>
+            <div class="jy-panel-heading-desc">
+                @(activeLoans.Any(l => l.IsOverdue) ? "Includes overdue loans that need attention." : "All your loans are within their return dates.")
+            </div>
+        </div>
+        <a asp-controller="Catalog" asp-action="Index" class="jy-btn-secondary">+ Borrow more books</a>
+    </div>
+
+    <div class="jy-table-container">
+        <table class="jy-table">
+            <thead>
+                <tr>
+                    <th style="width: 35%;">BOOK / LINKED IDS</th>
+                    <th style="width: 15%;">BORROWED AT</th>
+                    <th style="width: 15%;">DUE AT</th>
+                    <th style="width: 10%;">RENEWALS</th>
+                    <th style="width: 13%;">DERIVED STATE</th>
+                    <th style="width: 12%;">ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (activeLoans.Any())
+                {
+                    @foreach (var loan in activeLoans)
+                    {
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600; font-size: 14px; color: var(--jy-primary-green);">
+                                    @loan.Copy?.Book?.Title
+                                </div>
+                                <div style="font-size: 12px; color: var(--jy-text-muted);">
+                                    Book @loan.Copy?.BookId · Copy @loan.CopyId · Loan #@loan.LoanId
+                                </div>
+                            </td>
+                            <td style="font-size: 13px; color: var(--jy-text-muted);">
+                                @loan.BorrowedAt.ToString("dd MMM yyyy")
+                            </td>
+                            <td>
+                                <div style="font-size: 14px; font-weight: 600; color: @(loan.IsOverdue ? "var(--jy-badge-red-text)" : "var(--jy-primary-dark)");">
+                                    @loan.DueAt.ToString("dd MMM yyyy")
+                                </div>
+                                <div style="font-size: 11px; color: var(--jy-text-muted);">@loan.DueAt.ToString("HH:mm")</div>
+                            </td>
+                            <td style="font-size: 13px; font-weight: 500;">
+                                @loan.RenewalCount / @(Model.Role?.Policy?.MaxRenewals ?? 1)
+                            </td>
+                            <td>
+                                @if (loan.IsOverdue)
+                                {
+                                    <span class="jy-badge jy-badge-overdue">
+                                        <span class="jy-badge-dot"></span> Overdue
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="jy-badge jy-badge-available">
+                                        <span class="jy-badge-dot"></span> Active
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                @if (loan.RenewalCount < (Model.Role?.Policy?.MaxRenewals ?? 1))
+                                {
+                                    <form asp-action="Renew" method="post" style="display:inline;">
+                                        <input type="hidden" name="loanId" value="@loan.LoanId" />
+                                        <button type="submit" class="jy-btn-secondary p-1 px-2" style="font-size: 12px;">Renew loan →</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span style="font-size: 11px; color: var(--jy-text-muted);">Max renewals reached</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">You have no active loans right now.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Active Reservations Queue -->
+<div class="jy-panel mt-4">
+    <div class="jy-panel-header">
+        <div>
+            <div class="jy-panel-heading-title">My reservations &amp; hold queue</div>
+            <div class="jy-panel-heading-desc">@reservations.Count reservations on your record</div>
+        </div>
+    </div>
+
+    <div class="jy-table-container">
+        <table class="jy-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">RESERVATION ID</th>
+                    <th style="width: 40%;">TITLE</th>
+                    <th style="width: 20%;">REQUESTED ON</th>
+                    <th style="width: 25%;">HOLD STATUS</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (reservations.Any())
+                {
+                    @foreach (var res in reservations)
+                    {
+                        <tr>
+                            <td style="font-weight: 600; font-size: 14px; color: var(--jy-primary-dark);">
+                                #@res.ReservationId
+                            </td>
+                            <td>
+                                <div style="font-weight: 600; color: var(--jy-primary-green);">@res.Book?.Title</div>
+                                <div style="font-size: 12px; color: var(--jy-text-muted);">Book #@res.BookId</div>
+                            </td>
+                            <td style="font-size: 13px; color: var(--jy-text-muted);">
+                                @res.ReservedAt.ToString("dd MMM yyyy HH:mm")
+                            </td>
+                            <td>
+                                @if (res.Status == "PENDING")
+                                {
+                                    <span class="jy-badge jy-badge-waiting">
+                                        <span class="jy-badge-dot"></span> In Queue / Awaiting Copy
+                                    </span>
+                                }
+                                else if (res.Status == "FULFILLED")
+                                {
+                                    <span class="jy-badge jy-badge-available">
+                                        <span class="jy-badge-dot"></span> Ready for Pickup (Copy #@res.FulfilledCopyId)
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="jy-badge">@res.Status</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-3">No active hold requests.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Past Borrowing History -->
+@if (returnedLoans.Any())
+{
+    <div class="jy-panel mt-4">
+        <div class="jy-panel-header">
+            <div>
+                <div class="jy-panel-heading-title">Past borrowing history</div>
+                <div class="jy-panel-heading-desc">@returnedLoans.Count previously returned book(s)</div>
+            </div>
+        </div>
+
+        <div class="jy-table-container">
+            <table class="jy-table">
+                <thead>
+                    <tr>
+                        <th>BOOK TITLE</th>
+                        <th>BORROWED AT</th>
+                        <th>RETURNED ON</th>
+                        <th>STATUS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var loan in returnedLoans)
+                    {
+                        <tr>
+                            <td style="font-weight: 600; color: var(--jy-primary-dark);">@loan.Copy?.Book?.Title</td>
+                            <td style="font-size: 13px; color: var(--jy-text-muted);">@loan.BorrowedAt.ToString("dd MMM yyyy")</td>
+                            <td style="font-size: 13px; color: var(--jy-primary-green);">@loan.ReturnedAt?.ToString("dd MMM yyyy")</td>
+                            <td>
+                                <span class="jy-badge jy-badge-available">
+                                    <span class="jy-badge-dot"></span> Returned
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

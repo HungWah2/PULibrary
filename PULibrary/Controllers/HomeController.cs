@@ -6,7 +6,7 @@ public class HomeController : Controller
 {
     public IActionResult Index()
     {
-        return RedirectToAction("Dashboard", "Admin");
+        return RedirectToAction("Index", "Catalog");
     }
 
     public IActionResult Privacy()

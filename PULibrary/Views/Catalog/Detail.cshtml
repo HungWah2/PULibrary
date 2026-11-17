@@ -1,0 +1,195 @@
+@model PULibrary.Models.Book
+@{
+    ViewData["Title"] = Model.Title;
+    int totalCopies = Model.Copies.Count;
+    int availableCopies = Model.Copies.Count(c => c.Status == "Available");
+    var authors = Model.AssociateBookAuthors.Select(a => a.Author?.AuthorName).Where(n => !string.IsNullOrEmpty(n)).ToList();
+    var publishers = Model.AssociateBookPublishers.Select(p => p.Publisher?.PublisherName).Where(n => !string.IsNullOrEmpty(n)).ToList();
+    var categories = Model.AssociateBookCategories.Select(c => c.Category?.CategoryName).Where(n => !string.IsNullOrEmpty(n)).ToList();
+}
+
+<div class="jy-page-heading">
+    <div class="jy-section-label">COLLECTION / BOOK @Model.BookId</div>
+    <div class="jy-title-row">
+        <h1 class="jy-page-title">@Model.Title</h1>
+        <a asp-action="Index" class="jy-btn-secondary">← Back to catalog</a>
+    </div>
+    <div class="jy-page-subtitle">Bibliographic record &amp; physical copies in circulation.</div>
+</div>
+
+<!-- Bibliographic record card (matching Figma node 1:2705) -->
+<div class="jy-panel" style="padding: 28px;">
+    <div class="d-flex gap-4 align-items-start flex-wrap flex-lg-nowrap">
+        <!-- Big Book Cover Miniature (158px x 218px) -->
+        <div class="jy-book-cover-thumb" style="width: 158px; height: 218px; padding: 16px; border-left-width: 6px;">
+            <div style="font-family: var(--font-heading); font-size: 20px; color: #fffdf8; line-height: 1.25;">
+                @Model.Title
+            </div>
+            <div class="jy-cover-rule"></div>
+            <div style="font-size: 10px; color: #fffdf8; letter-spacing: 0.05em; text-transform: uppercase;">
+                @(authors.Any() ? string.Join(" · ", authors) : "JingYi Library")
+            </div>
+        </div>
+
+        <!-- Book information -->
+        <div class="d-flex flex-column gap-3" style="flex: 1; min-width: 0;">
+            <h2 style="font-family: var(--font-heading); font-size: 24px; color: var(--jy-primary-dark); margin: 0;">
+                A companion for the curious.
+            </h2>
+
+            <div class="d-flex gap-4 flex-wrap">
+                <div>
+                    <div class="jy-inv-label">BOOK ID</div>
+                    <div style="font-size: 14px; font-weight: 500;">@Model.BookId</div>
+                </div>
+                <div>
+                    <div class="jy-inv-label">ISBN</div>
+                    <div style="font-size: 14px; font-weight: 500;">@(Model.Isbn ?? "N/A")</div>
+                </div>
+                <div>
+                    <div class="jy-inv-label">LANGUAGE / EDITION</div>
+                    <div style="font-size: 14px; font-weight: 500;">@Model.Language · Edition @Model.Edition</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="jy-inv-label">AUTHORS · MULTIPLE LINKED RECORDS</div>
+                <div style="font-size: 14px; color: var(--jy-primary-green); font-weight: 500;">
+                    @(authors.Any() ? string.Join(" · ", authors) : "No authors specified") ↗
+                </div>
+            </div>
+
+            <div>
+                <div class="jy-inv-label">PUBLISHERS · MULTIPLE LINKED RECORDS</div>
+                <div style="font-size: 14px; color: var(--jy-primary-dark);">
+                    @(publishers.Any() ? string.Join(" · ", publishers) : "No publishers specified") ↗
+                </div>
+            </div>
+
+            <div>
+                <div class="jy-inv-label">CATEGORIES</div>
+                <div style="font-size: 14px; color: var(--jy-primary-dark);">
+                    @(categories.Any() ? string.Join(" · ", categories) : "General") ↗
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <p style="font-size: 14px; color: var(--jy-text-muted); line-height: 1.5; margin: 0;">
+                    @Model.Description
+                </p>
+            }
+
+            <div style="font-size: 12px; color: var(--jy-text-muted);">
+                Published @(Model.PublishedDate?.ToString("dd MMM yyyy") ?? "2024") · Cover reference: @(Model.CoverImage ?? "/covers/default.jpg")
+            </div>
+        </div>
+
+        <!-- Right Availability Summary Column (matching Figma 1:2732) -->
+        <div style="width: 220px; border-left: 1px solid var(--jy-border); padding-left: 24px;" class="d-flex flex-column gap-3">
+            <div>
+                <span class="jy-badge @(availableCopies > 0 ? "jy-badge-available" : "jy-badge-waiting")">
+                    <span class="jy-badge-dot"></span> @(availableCopies > 0 ? "Available" : "Checked Out")
+                </span>
+            </div>
+
+            <div style="font-family: var(--font-heading); font-size: 38px; color: var(--jy-primary-dark); line-height: 1;">
+                @availableCopies of @totalCopies
+            </div>
+
+            <div style="font-size: 14px; color: var(--jy-text-muted); line-height: 1.35;">
+                physical copies ready to issue
+            </div>
+
+            <div style="font-size: 12px; color: var(--jy-text-muted); line-height: 1.35;">
+                Derived from copy status and current lending records.
+            </div>
+
+            <!-- Reserve Action -->
+            <form asp-action="Reserve" method="post">
+                <input type="hidden" name="bookId" value="@Model.BookId" />
+                <button type="submit" class="jy-btn-primary w-100 justify-content-center">
+                    Reserve book
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Copy availability panel (matching Figma node 1:2741) -->
+<div class="jy-panel">
+    <div class="jy-panel-header">
+        <div>
+            <div class="jy-panel-heading-title">Copy availability</div>
+            <div class="jy-panel-heading-desc">@totalCopies physical copies of Book @Model.BookId.</div>
+        </div>
+    </div>
+
+    <div class="jy-table-container">
+        <table class="jy-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">COPY ID</th>
+                    <th style="width: 25%;">UNIQUE SHELF LOCATION</th>
+                    <th style="width: 15%;">CONDITION</th>
+                    <th style="width: 15%;">COPY STATUS</th>
+                    <th style="width: 30%;">LINKED LOAN / DUE AT</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var copy in Model.Copies)
+                {
+                    var activeLoan = copy.Loans.FirstOrDefault(l => l.ReturnedAt == null);
+                    <tr>
+                        <td style="font-weight: 600; font-size: 14px; color: var(--jy-primary-dark);">
+                            #@copy.CopyId
+                        </td>
+                        <td style="font-family: monospace; font-size: 14px; color: var(--jy-primary-dark);">
+                            @copy.ShelfLocation
+                        </td>
+                        <td>
+                            <span class="jy-badge" style="background-color: #f1efea; color: var(--jy-primary-dark);">
+                                @copy.CopyCondition
+                            </span>
+                        </td>
+                        <td>
+                            @if (copy.Status == "Available")
+                            {
+                                <span class="jy-badge jy-badge-available">
+                                    <span class="jy-badge-dot"></span> Available
+                                </span>
+                            }
+                            else if (copy.Status == "Borrowed")
+                            {
+                                <span class="jy-badge jy-badge-overdue">
+                                    <span class="jy-badge-dot"></span> On Loan
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="jy-badge jy-badge-waiting">
+                                    <span class="jy-badge-dot"></span> Reserved
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            @if (activeLoan != null)
+                            {
+                                <div style="font-size: 13px; color: var(--jy-primary-dark);">
+                                    Due: @activeLoan.DueAt.ToString("dd MMM yyyy HH:mm")
+                                </div>
+                                <div style="font-size: 11px; color: var(--jy-text-muted);">
+                                    Loan #@activeLoan.LoanId · Renewals: @activeLoan.RenewalCount
+                                </div>
+                            }
+                            else
+                            {
+                                <span style="font-size: 13px; color: var(--jy-primary-green);">In stack / Ready for loan</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

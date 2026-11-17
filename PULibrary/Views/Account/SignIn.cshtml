@@ -1,0 +1,196 @@
+@{
+    Layout = null; // Standalone authentication screen as specified in Figma
+    ViewData["Title"] = "Sign in - JingYi Public Library";
+    var quickUsers = ViewBag.QuickUsers as List<PULibrary.Models.User> ?? new();
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Source+Sans+3:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <style>
+        .jy-auth-container {
+            display: flex;
+            min-height: 100vh;
+            background-color: var(--jy-canvas-bg);
+        }
+        .jy-auth-left {
+            width: 50%;
+            background-color: #275b46;
+            background: linear-gradient(135deg, #1b3e30 0%, #275b46 100%);
+            color: #fffdf8;
+            padding: 64px 56px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        .jy-auth-left::after {
+            content: "";
+            position: absolute;
+            bottom: -50px;
+            right: -50px;
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212, 220, 201, 0.15) 0%, rgba(212, 220, 201, 0) 70%);
+            pointer-events: none;
+        }
+        .jy-auth-right {
+            width: 50%;
+            padding: 64px 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background-color: var(--jy-canvas-bg);
+            overflow-y: auto;
+        }
+        .jy-editorial-title {
+            font-family: var(--font-heading);
+            font-size: 46px;
+            line-height: 1.18;
+            color: #fffdf8;
+            margin: 20px 0;
+        }
+        .jy-editorial-rule {
+            width: 64px;
+            height: 2px;
+            background-color: #d4dcc9;
+            margin-bottom: 24px;
+        }
+        .jy-quick-chip {
+            background-color: #fffdf8;
+            border: 1px solid var(--jy-border);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 13px;
+            color: var(--jy-primary-dark);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .jy-quick-chip:hover {
+            border-color: var(--jy-primary-green);
+            color: var(--jy-primary-green);
+            background-color: #f1efea;
+        }
+    </style>
+</head>
+<body class="jy-app-body">
+    <div class="jy-auth-container">
+        <!-- Left Hero Section (matching Figma 1:3323) -->
+        <div class="jy-auth-left">
+            <!-- Brand -->
+            <div class="d-flex align-items-center gap-2">
+                <div class="jy-brand-logo" style="background: rgba(255,255,255,0.1); border-radius: 6px; padding: 4px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fffdf8" stroke-width="2">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div style="font-family: var(--font-heading); font-size: 22px; color: #fffdf8; line-height: 1;">JingYi</div>
+                    <div style="font-size: 10px; font-weight: 600; color: #d4dcc9; letter-spacing: 0.08em;">PUBLIC LIBRARY</div>
+                </div>
+            </div>
+
+            <!-- Welcome Editorial -->
+            <div>
+                <div style="font-size: 11px; font-weight: 600; color: #d4dcc9; letter-spacing: 0.08em;">THE CONNECTED LIBRARY</div>
+                <div class="jy-editorial-title">
+                    Good books.<br />
+                    Thoughtful service.<br />
+                    One connected library.
+                </div>
+                <div class="jy-editorial-rule"></div>
+                <p style="font-size: 17px; color: #d4dcc9; max-width: 460px; line-height: 1.5;">
+                    Care for the collection, discover inspiring titles and keep every reading and lending journey connected.
+                </p>
+            </div>
+
+            <div style="font-size: 11px; color: #d4dcc9; letter-spacing: 0.05em;">
+                JINGYI PUBLIC LIBRARY &nbsp; / &nbsp; STAFF &amp; READER ACCESS
+            </div>
+        </div>
+
+        <!-- Right Form Section (matching Figma 1:3338) -->
+        <div class="jy-auth-right">
+            <!-- Lock header -->
+            <div class="d-flex align-items-center gap-2" style="color: var(--jy-primary-green);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em;">SECURE LIBRARY WORKSPACE &amp; READER PORTAL</span>
+            </div>
+
+            <!-- Form block -->
+            <div style="max-width: 440px; width: 100%; margin: 40px 0;">
+                <h1 style="font-family: var(--font-heading); font-size: 38px; color: var(--jy-primary-dark); margin-bottom: 8px;">Welcome back.</h1>
+                <p style="font-size: 15px; color: var(--jy-text-muted); margin-bottom: 24px;">Sign in with your JingYi username and password.</p>
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div style="background-color: var(--jy-badge-red-bg); border-left: 3px solid var(--jy-badge-red-text); border-radius: 6px; padding: 14px 16px; margin-bottom: 22px; color: var(--jy-badge-red-text);">
+                        <div style="font-weight: 600; font-size: 14px;">We couldn’t sign you in.</div>
+                        <div style="font-size: 13px;">Check your username and password, then try again.</div>
+                    </div>
+                }
+
+                <form asp-action="SignIn" method="post" class="d-flex flex-column gap-3">
+                    <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+
+                    <div>
+                        <label class="jy-form-label" style="font-size: 13px;">Username</label>
+                        <input type="text" name="username" required class="form-control jy-form-control" style="height: 44px;" placeholder="e.g. mchen, pshah, or jl" />
+                        <div style="font-size: 12px; color: var(--jy-text-muted); margin-top: 4px;">Your library account username · up to 20 characters</div>
+                    </div>
+
+                    <div>
+                        <label class="jy-form-label" style="font-size: 13px;">Password</label>
+                        <input type="password" name="password" required class="form-control jy-form-control" style="height: 44px;" placeholder="••••••••••••" />
+                        <div style="font-size: 12px; color: var(--jy-text-muted); margin-top: 4px;">Passwords are case-sensitive.</div>
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-between mt-2">
+                        <span style="font-size: 12px; color: var(--jy-text-muted);">Protected session</span>
+                        <button type="submit" class="jy-btn-primary" style="height: 44px; padding: 0 24px;">Sign in →</button>
+                    </div>
+                </form>
+
+                <!-- Quick Switch chips for grading / testing -->
+                <div style="margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--jy-border);">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--jy-text-muted); margin-bottom: 10px;">
+                        QUICK LOGIN (DEMO PROFILES):
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var u in quickUsers)
+                        {
+                            <a asp-action="QuickSwitch" asp-route-id="@u.UserId" class="jy-quick-chip">
+                                <strong>@u.Name</strong>
+                                <span style="font-size: 11px; color: var(--jy-text-muted);">(@u.Role?.RoleName)</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div style="font-size: 12px; color: var(--jy-text-muted);">
+                Authorized readers and staff only. Keep reader information private.
+            </div>
+        </div>
+    </div>
+</body>
+</html>
