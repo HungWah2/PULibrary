@@ -554,11 +554,36 @@ public class AdminController : Controller
     // GET: /Admin/Users
     public async Task<IActionResult> Users()
     {
+        ViewBag.Roles = await _context.Roles.ToListAsync();
         var users = await _context.Users
             .Include(u => u.Role).ThenInclude(r => r!.Policy)
             .Include(u => u.Loans)
             .ToListAsync();
         return View(users);
+    }
+
+    // POST: /Admin/UpdateUser
+    [HttpPost]
+    public async Task<IActionResult> UpdateUser(int userId, string name, string email, string phone, string status, short roleId)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user != null)
+        {
+            user.Name = name.Trim().Length > 30 ? name.Trim().Substring(0, 30) : name.Trim();
+            user.Email = email.Trim().Length > 100 ? email.Trim().Substring(0, 100) : email.Trim();
+            if (!string.IsNullOrWhiteSpace(phone))
+            {
+                var digits = new string(phone.Where(char.IsDigit).ToArray());
+                if (digits.Length > 10) digits = digits.Substring(0, 10);
+                user.Phone = digits.PadRight(10, '0');
+            }
+            user.Status = status;
+            user.RoleId = roleId;
+            user.UpdatedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"User #{userId} ({user.Name}) account customized successfully!";
+        }
+        return RedirectToAction(nameof(Users));
     }
 
     // GET: /Admin/Policies

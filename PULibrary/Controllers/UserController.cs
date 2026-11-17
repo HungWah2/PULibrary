@@ -96,4 +96,47 @@ public class UserController : Controller
 
         return RedirectToAction(nameof(Profile), new { id = currentUserId });
     }
+
+    // POST: /User/UpdateProfile
+    [HttpPost]
+    public async Task<IActionResult> UpdateProfile(string name, string email, string phone, string? newPassword)
+    {
+        int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 2481;
+        var user = await _context.Users.FindAsync(currentUserId);
+        if (user == null)
+        {
+            TempData["ErrorMessage"] = "User account not found.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email))
+        {
+            TempData["ErrorMessage"] = "Name and Email are required fields.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        user.Name = name.Trim().Length > 30 ? name.Trim().Substring(0, 30) : name.Trim();
+        user.Email = email.Trim().Length > 100 ? email.Trim().Substring(0, 100) : email.Trim();
+
+        if (!string.IsNullOrWhiteSpace(phone))
+        {
+            var digits = new string(phone.Where(char.IsDigit).ToArray());
+            if (digits.Length > 10) digits = digits.Substring(0, 10);
+            user.Phone = digits.PadRight(10, '0');
+        }
+
+        if (!string.IsNullOrWhiteSpace(newPassword) && newPassword.Trim().Length >= 4)
+        {
+            user.PasswordHash = newPassword.Trim();
+        }
+
+        user.UpdatedAt = DateTime.Now;
+        await _context.SaveChangesAsync();
+
+        // Update session identity so the UI updates immediately
+        HttpContext.Session.SetString("UserName", user.Name);
+
+        TempData["SuccessMessage"] = "Your account profile has been customized successfully!";
+        return RedirectToAction(nameof(Profile), new { id = currentUserId });
+    }
 }

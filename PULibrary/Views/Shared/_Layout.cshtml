@@ -168,8 +168,10 @@
                 <div class="jy-account-info">
                     <div class="jy-account-name">@userName</div>
                     <div class="jy-account-role">@userRole</div>
-                    <div class="jy-account-meta">
-                        <a asp-controller="Account" asp-action="SignIn" style="color: inherit; text-decoration: underline;">Switch / Sign out</a>
+                    <div class="jy-account-meta d-flex gap-2">
+                        <a asp-controller="User" asp-action="Profile" asp-route-id="@userId" style="color: inherit; text-decoration: underline;">Profile &amp; Settings</a>
+                        <span>·</span>
+                        <a asp-controller="Account" asp-action="SignIn" style="color: inherit; text-decoration: underline;">Switch user</a>
                     </div>
                 </div>
             </div>
