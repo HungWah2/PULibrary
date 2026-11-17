@@ -1,0 +1,204 @@
+@model PULibrary.Models.BookCatalogViewModel
+@{
+    ViewData["Title"] = "Book catalog";
+}
+
+<div class="jy-page-heading">
+    <div class="jy-section-label">COLLECTION / BIBLIOGRAPHIC RECORDS</div>
+    <div class="jy-title-row">
+        <h1 class="jy-page-title">Find the right book.</h1>
+        <button type="button" class="jy-btn-primary" data-bs-toggle="modal" data-bs-target="#addBookModal">
+            + Add a book
+        </button>
+    </div>
+    <div class="jy-page-subtitle">Search titles, ISBNs and linked catalog metadata. Availability comes from physical copies.</div>
+</div>
+
+<!-- Search and filters -->
+<div class="jy-panel" style="padding: 16px 20px;">
+    <form method="get" asp-action="Books" class="d-flex flex-column gap-3">
+        <!-- Search field & button -->
+        <div class="d-flex gap-3 align-items-center">
+            <div class="input-group" style="flex: 1;">
+                <span class="input-group-text" style="background-color:#fffdf8; border-color:var(--jy-border);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6c746b" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </span>
+                <input type="text" name="search" value="@Model.SearchQuery" class="form-control jy-form-control" placeholder="Search title, ISBN, author or publisher" />
+            </div>
+            <button type="submit" class="jy-btn-primary" style="height: 42px;">Search</button>
+        </div>
+
+        <!-- Filter pills -->
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <select name="availability" class="form-select jy-form-control" style="width: auto; height: 34px; font-size: 13px;" onchange="this.form.submit()">
+                <option value="">All availability</option>
+                <option value="Available" selected="@(Model.SelectedAvailability == "Available")">Available now</option>
+            </select>
+
+            <select name="category" class="form-select jy-form-control" style="width: auto; height: 34px; font-size: 13px;" onchange="this.form.submit()">
+                <option value="">All categories</option>
+                @foreach (var cat in Model.AllCategories)
+                {
+                    <option value="@cat" selected="@(Model.SelectedCategory == cat)">@cat</option>
+                }
+            </select>
+
+            <select name="language" class="form-select jy-form-control" style="width: auto; height: 34px; font-size: 13px;" onchange="this.form.submit()">
+                <option value="">All languages</option>
+                @foreach (var lang in Model.AllLanguages)
+                {
+                    <option value="@lang" selected="@(Model.SelectedLanguage == lang)">@lang</option>
+                }
+            </select>
+
+            @if (!string.IsNullOrEmpty(Model.SearchQuery) || !string.IsNullOrEmpty(Model.SelectedCategory) || !string.IsNullOrEmpty(Model.SelectedLanguage) || !string.IsNullOrEmpty(Model.SelectedAvailability))
+            {
+                <a asp-action="Books" class="jy-btn-link ms-2" style="font-size: 13px;">Clear filters</a>
+            }
+        </div>
+    </form>
+</div>
+
+<!-- Books Collection Table -->
+<div class="jy-panel">
+    <div class="jy-panel-header">
+        <div>
+            <div class="jy-panel-heading-title">The collection</div>
+            <div class="jy-panel-heading-desc">@Model.TotalBooksCount book records · @Model.TotalPhysicalCopiesCount physical copies</div>
+        </div>
+    </div>
+
+    <div class="jy-table-container">
+        <table class="jy-table">
+            <thead>
+                <tr>
+                    <th style="width: 35%;">TITLE / ISBN</th>
+                    <th style="width: 30%;">LINKED CATALOG METADATA</th>
+                    <th style="width: 15%;">LANGUAGE / EDITION</th>
+                    <th style="width: 10%;">COPIES</th>
+                    <th style="width: 10%;">ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Books.Any())
+                {
+                    @foreach (var book in Model.Books)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="jy-book-cover-thumb">
+                                        <div class="jy-cover-title">@book.Title</div>
+                                        <div class="jy-cover-rule"></div>
+                                        <div class="jy-cover-author">@(book.Authors.FirstOrDefault() ?? "Author")</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 600; font-size: 15px; color: var(--jy-primary-green);">@book.Title</div>
+                                        <div style="font-size: 12px; color: var(--jy-text-muted);">
+                                            Book @book.BookId @(book.Isbn != null ? $"· ISBN {book.Isbn}" : "")
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div style="display: flex; flex-direction: column; gap: 3px;">
+                                    <div style="color: var(--jy-primary-green); font-size: 13px;">
+                                        @(book.Authors.Any() ? string.Join(" · ", book.Authors) : "No author specified") ↗
+                                    </div>
+                                    <div style="color: var(--jy-text-muted); font-size: 12px;">
+                                        @(book.Publishers.Any() ? string.Join(" · ", book.Publishers) : "No publisher") ↗
+                                    </div>
+                                    <div style="color: var(--jy-text-muted); font-size: 12px;">
+                                        @(book.Categories.Any() ? string.Join(" · ", book.Categories) : "General") ↗
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div style="font-size: 14px; color: var(--jy-primary-dark);">@book.Language</div>
+                                <div style="font-size: 12px; color: var(--jy-text-muted);">Edition @book.Edition</div>
+                            </td>
+                            <td>
+                                <div>
+                                    <span class="jy-badge @(book.AvailableCopies > 0 ? "jy-badge-available" : "jy-badge-waiting")">
+                                        <span class="jy-badge-dot"></span> @book.AvailableCopies of @book.TotalCopies
+                                    </span>
+                                    <div style="font-size: 11px; color: var(--jy-text-muted); margin-top: 2px;">available</div>
+                                </div>
+                            </td>
+                            <td>
+                                <a asp-action="Circulation" class="jy-btn-link">Circulate →</a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">No books match your criteria.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Add a Book -->
+<div class="modal fade" id="addBookModal" tabindex="-1" aria-labelledby="addBookModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background-color: var(--jy-card-bg); border: 1px solid var(--jy-border); border-radius: 10px;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--jy-border);">
+                <h5 class="modal-title" id="addBookModalLabel" style="font-family: var(--font-heading); color: var(--jy-primary-dark);">Add New Book to Collection</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="AddBook" method="post">
+                <div class="modal-body d-flex flex-column gap-3">
+                    <div>
+                        <label class="jy-form-label">Book Title *</label>
+                        <input type="text" name="title" required class="form-control jy-form-control" placeholder="e.g. Modern Software Engineering" />
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-7">
+                            <label class="jy-form-label">ISBN-13 (optional)</label>
+                            <input type="text" name="isbn" maxlength="13" class="form-control jy-form-control" placeholder="978xxxxxxxxxx" />
+                        </div>
+                        <div class="col-5">
+                            <label class="jy-form-label">Edition</label>
+                            <input type="number" name="edition" value="1" min="1" class="form-control jy-form-control" />
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="jy-form-label">Language</label>
+                            <select name="language" class="form-select jy-form-control">
+                                <option value="English">English</option>
+                                <option value="Chinese">Chinese</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="jy-form-label">Category</label>
+                            <input type="text" name="categoryName" class="form-control jy-form-control" placeholder="e.g. Computer Science" />
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="jy-form-label">Author Name</label>
+                            <input type="text" name="authorName" class="form-control jy-form-control" placeholder="e.g. Martin Fowler" />
+                        </div>
+                        <div class="col-6">
+                            <label class="jy-form-label">Publisher</label>
+                            <input type="text" name="publisherName" class="form-control jy-form-control" placeholder="e.g. Addison-Wesley" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="jy-form-label">Description (optional)</label>
+                        <textarea name="description" rows="2" class="form-control jy-form-control" placeholder="Brief synopsis or bibliographic notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--jy-border);">
+                    <button type="button" class="jy-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="jy-btn-primary">Save Book</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

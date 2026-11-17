@@ -1,0 +1,134 @@
+@model PULibrary.Models.CirculationDeskViewModel
+@{
+    ViewData["Title"] = "Circulation desk";
+}
+
+<div class="jy-page-heading">
+    <div class="jy-section-label">DESK OPERATIONS / ISSUE & RETURN</div>
+    <div class="jy-title-row">
+        <h1 class="jy-page-title">Issue, return and renew desk.</h1>
+        <a asp-action="Loans" class="jy-btn-secondary">Loans register →</a>
+    </div>
+    <div class="jy-page-subtitle">Circulate physical copies to registered library readers according to role lending terms.</div>
+</div>
+
+<div class="row g-4">
+    <!-- Issue a Book Box -->
+    <div class="col-lg-4">
+        <div class="jy-panel">
+            <div class="jy-panel-header">
+                <div>
+                    <div class="jy-panel-heading-title">Issue a book copy</div>
+                    <div class="jy-panel-heading-desc">Select an active reader and an available copy.</div>
+                </div>
+            </div>
+
+            <form asp-action="IssueBook" method="post" class="d-flex flex-column gap-3">
+                <div>
+                    <label class="jy-form-label">Select Reader *</label>
+                    <select name="userId" required class="form-select jy-form-control">
+                        <option value="">-- Choose reader --</option>
+                        @foreach (var user in Model.ActiveUsers)
+                        {
+                            <option value="@user.UserId">
+                                @user.Name (@user.Role?.RoleName - User @user.UserId)
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div>
+                    <label class="jy-form-label">Select Available Physical Copy *</label>
+                    <select name="copyId" required class="form-select jy-form-control">
+                        <option value="">-- Choose available copy --</option>
+                        @foreach (var copy in Model.AvailableCopies)
+                        {
+                            <option value="@copy.CopyId">
+                                #@copy.CopyId: @copy.Book?.Title (@copy.ShelfLocation)
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="jy-tip-box" style="font-size: 12px; padding: 10px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <span>Borrower's policy governs loan duration and max active loans automatically.</span>
+                </div>
+
+                <button type="submit" class="jy-btn-primary justify-content-center">Issue Copy to Reader →</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Active Circulation Desk List -->
+    <div class="col-lg-8">
+        <div class="jy-panel">
+            <div class="jy-panel-header">
+                <div>
+                    <div class="jy-panel-heading-title">Currently issued loans</div>
+                    <div class="jy-panel-heading-desc">@Model.ActiveLoans.Count active loans awaiting return</div>
+                </div>
+            </div>
+
+            <div class="jy-table-container">
+                <table class="jy-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 35%;">BOOK & COPY</th>
+                            <th style="width: 25%;">BORROWER</th>
+                            <th style="width: 20%;">DUE AT</th>
+                            <th style="width: 20%;">ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.ActiveLoans.Any())
+                        {
+                            @foreach (var loan in Model.ActiveLoans)
+                            {
+                                <tr>
+                                    <td>
+                                        <div style="font-weight: 600; color: var(--jy-primary-green);">@loan.Copy?.Book?.Title</div>
+                                        <div style="font-size: 12px; color: var(--jy-text-muted);">Copy #@loan.CopyId · Loan #@loan.LoanId</div>
+                                    </td>
+                                    <td>
+                                        <div style="font-weight: 600; color: var(--jy-primary-dark);">@loan.User?.Name</div>
+                                        <div style="font-size: 12px; color: var(--jy-text-muted);">User @loan.UserId</div>
+                                    </td>
+                                    <td>
+                                        <div style="font-size: 13px; font-weight: 600; color: @(loan.IsOverdue ? "var(--jy-badge-red-text)" : "var(--jy-primary-dark)");">
+                                            @loan.DueAt.ToString("dd MMM yyyy")
+                                        </div>
+                                        @if (loan.IsOverdue)
+                                        {
+                                            <span class="jy-badge jy-badge-overdue" style="font-size: 10px; padding: 2px 6px;">Overdue</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <form asp-action="ReturnLoan" method="post" style="display:inline;">
+                                                <input type="hidden" name="loanId" value="@loan.LoanId" />
+                                                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                                <button type="submit" class="jy-btn-primary p-1 px-2" style="font-size: 12px;">Return</button>
+                                            </form>
+                                            <form asp-action="RenewLoan" method="post" style="display:inline;">
+                                                <input type="hidden" name="loanId" value="@loan.LoanId" />
+                                                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                                <button type="submit" class="jy-btn-secondary p-1 px-2" style="font-size: 12px;">Renew</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">No active loans right now.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

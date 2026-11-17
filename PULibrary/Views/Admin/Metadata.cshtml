@@ -1,0 +1,110 @@
+@{
+    ViewData["Title"] = "Catalog metadata";
+    var authors = ViewBag.Authors as List<PULibrary.Models.Author> ?? new();
+    var publishers = ViewBag.Publishers as List<PULibrary.Models.Publisher> ?? new();
+    var categories = ViewBag.Categories as List<PULibrary.Models.Category> ?? new();
+}
+
+<div class="jy-page-heading">
+    <div class="jy-section-label">CLASSIFICATION & AUTHORITY FILES</div>
+    <div class="jy-title-row">
+        <h1 class="jy-page-title">Catalog metadata management.</h1>
+        <a asp-action="Books" class="jy-btn-secondary">Book catalog →</a>
+    </div>
+    <div class="jy-page-subtitle">Maintain authority records for authors, publishers, and subject categories linked to books.</div>
+</div>
+
+<div class="row g-4">
+    <!-- Authors -->
+    <div class="col-md-4">
+        <div class="jy-panel">
+            <div class="jy-panel-header">
+                <div>
+                    <div class="jy-panel-heading-title">Authors</div>
+                    <div class="jy-panel-heading-desc">@authors.Count authors registered</div>
+                </div>
+            </div>
+            <div class="jy-table-container">
+                <table class="jy-table">
+                    <thead>
+                        <tr>
+                            <th>AUTHOR</th>
+                            <th>BOOKS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var a in authors)
+                        {
+                            <tr>
+                                <td style="font-weight: 500; color: var(--jy-primary-dark);">@a.AuthorName</td>
+                                <td style="font-size: 12px; color: var(--jy-primary-green);">@a.AssociateBookAuthors.Count title(s)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Publishers -->
+    <div class="col-md-4">
+        <div class="jy-panel">
+            <div class="jy-panel-header">
+                <div>
+                    <div class="jy-panel-heading-title">Publishers</div>
+                    <div class="jy-panel-heading-desc">@publishers.Count publishers registered</div>
+                </div>
+            </div>
+            <div class="jy-table-container">
+                <table class="jy-table">
+                    <thead>
+                        <tr>
+                            <th>PUBLISHER</th>
+                            <th>BOOKS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in publishers)
+                        {
+                            <tr>
+                                <td style="font-weight: 500; color: var(--jy-primary-dark);">@p.PublisherName</td>
+                                <td style="font-size: 12px; color: var(--jy-primary-green);">@p.AssociateBookPublishers.Count title(s)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="col-md-4">
+        <div class="jy-panel">
+            <div class="jy-panel-header">
+                <div>
+                    <div class="jy-panel-heading-title">Categories</div>
+                    <div class="jy-panel-heading-desc">@categories.Count subject categories</div>
+                </div>
+            </div>
+            <div class="jy-table-container">
+                <table class="jy-table">
+                    <thead>
+                        <tr>
+                            <th>CATEGORY</th>
+                            <th>BOOKS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in categories)
+                        {
+                            <tr>
+                                <td style="font-weight: 500; color: var(--jy-primary-dark);">@c.CategoryName</td>
+                                <td style="font-size: 12px; color: var(--jy-primary-green);">@c.AssociateBookCategories.Count title(s)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

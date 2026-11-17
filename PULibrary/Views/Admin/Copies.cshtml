@@ -1,0 +1,90 @@
+@model List<PULibrary.Models.BookCopy>
+@{
+    ViewData["Title"] = "Copies";
+}
+
+<div class="jy-page-heading">
+    <div class="jy-section-label">INVENTORY / PHYSICAL ITEMS</div>
+    <div class="jy-title-row">
+        <h1 class="jy-page-title">Physical copies register.</h1>
+        <a asp-action="Books" class="jy-btn-primary">+ Manage books</a>
+    </div>
+    <div class="jy-page-subtitle">Inspect shelf locations, physical condition and circulation availability of every physical item.</div>
+</div>
+
+<div class="jy-panel">
+    <div class="jy-panel-header">
+        <div>
+            <div class="jy-panel-heading-title">All physical copies</div>
+            <div class="jy-panel-heading-desc">@Model.Count copies in total collection</div>
+        </div>
+    </div>
+
+    <div class="jy-table-container">
+        <table class="jy-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">COPY ID</th>
+                    <th style="width: 35%;">BOOK TITLE</th>
+                    <th style="width: 20%;">SHELF LOCATION</th>
+                    <th style="width: 15%;">CONDITION</th>
+                    <th style="width: 15%;">STATUS & ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var copy in Model)
+                {
+                    <tr>
+                        <td style="font-weight: 600; color: var(--jy-primary-dark); font-size: 14px;">
+                            #@copy.CopyId
+                        </td>
+                        <td>
+                            <div style="font-weight: 600; font-size: 14px; color: var(--jy-primary-green);">@copy.Book?.Title</div>
+                            <div style="font-size: 12px; color: var(--jy-text-muted);">Book ID @copy.BookId @(copy.Book?.Isbn != null ? $"· ISBN {copy.Book.Isbn}" : "")</div>
+                        </td>
+                        <td style="font-size: 14px; color: var(--jy-primary-dark); font-family: monospace;">
+                            @copy.ShelfLocation
+                        </td>
+                        <td>
+                            <form asp-action="UpdateCopyCondition" method="post" class="d-flex align-items-center gap-2">
+                                <input type="hidden" name="copyId" value="@copy.CopyId" />
+                                <select name="condition" class="form-select jy-form-control p-1" style="height: 32px; font-size: 12px; width: 100px;">
+                                    <option value="Good" selected="@(copy.CopyCondition == "Good")">Good</option>
+                                    <option value="Fair" selected="@(copy.CopyCondition == "Fair")">Fair</option>
+                                    <option value="Poor" selected="@(copy.CopyCondition == "Poor")">Poor</option>
+                                    <option value="Damaged" selected="@(copy.CopyCondition == "Damaged")">Damaged</option>
+                                </select>
+                                <select name="status" class="form-select jy-form-control p-1" style="height: 32px; font-size: 12px; width: 105px;">
+                                    <option value="Available" selected="@(copy.Status == "Available")">Available</option>
+                                    <option value="Borrowed" selected="@(copy.Status == "Borrowed")">Borrowed</option>
+                                    <option value="Reserved" selected="@(copy.Status == "Reserved")">Reserved</option>
+                                </select>
+                                <button type="submit" class="jy-btn-secondary p-1" style="height: 32px; font-size: 11px;">Save</button>
+                            </form>
+                        </td>
+                        <td>
+                            @if (copy.Status == "Available")
+                            {
+                                <span class="jy-badge jy-badge-available">
+                                    <span class="jy-badge-dot"></span> Available
+                                </span>
+                            }
+                            else if (copy.Status == "Borrowed")
+                            {
+                                <span class="jy-badge" style="background-color:#e2e8f0; color:#334155;">
+                                    <span class="jy-badge-dot" style="background-color:#334155;"></span> On Loan
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="jy-badge jy-badge-waiting">
+                                    <span class="jy-badge-dot"></span> Reserved
+                                </span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

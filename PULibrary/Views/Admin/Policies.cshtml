@@ -1,0 +1,70 @@
+@model List<PULibrary.Models.Role>
+@{
+    ViewData["Title"] = "Roles & policies";
+}
+
+<div class="jy-page-heading">
+    <div class="jy-section-label">GOVERNANCE / CIRCULATION RULES</div>
+    <div class="jy-title-row">
+        <h1 class="jy-page-title">Clear terms for every reader.</h1>
+    </div>
+    <div class="jy-page-subtitle">Manage role names and their borrowing policies. Each user is assigned exactly one role.</div>
+</div>
+
+<div class="jy-tip-box">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="8"></line></svg>
+    <span>Each user is assigned one role. Its borrowing policy sets the loan period, borrow limit and renewal limit.</span>
+</div>
+
+<div class="jy-panel">
+    <div class="jy-panel-header">
+        <div>
+            <div class="jy-panel-heading-title">Library roles & 1-to-1 borrowing policies</div>
+            <div class="jy-panel-heading-desc">@Model.Count roles configured</div>
+        </div>
+    </div>
+
+    <div class="jy-table-container">
+        <table class="jy-table">
+            <thead>
+                <tr>
+                    <th style="width: 20%;">ROLE</th>
+                    <th style="width: 15%;">USERS</th>
+                    <th style="width: 15%;">LOAN DAYS</th>
+                    <th style="width: 15%;">MAX LOANS</th>
+                    <th style="width: 15%;">MAX RENEWALS</th>
+                    <th style="width: 20%;">ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var role in Model)
+                {
+                    <tr>
+                        <td>
+                            <div style="font-weight: 600; font-size: 15px; color: var(--jy-primary-dark);">@role.RoleName</div>
+                            <div style="font-size: 12px; color: var(--jy-text-muted);">Role @role.RoleId</div>
+                        </td>
+                        <td style="font-size: 14px; font-weight: 600; color: var(--jy-primary-green);">
+                            @role.Users.Count reader(s)
+                        </td>
+                        <form asp-action="UpdatePolicy" method="post">
+                            <input type="hidden" name="policyId" value="@(role.Policy?.PolicyId ?? 0)" />
+                            <td>
+                                <input type="number" name="loanDays" value="@(role.Policy?.LoanDays ?? 14)" class="form-control jy-form-control p-1" style="width: 80px;" />
+                            </td>
+                            <td>
+                                <input type="number" name="maxLoans" value="@(role.Policy?.MaxLoans ?? 3)" class="form-control jy-form-control p-1" style="width: 80px;" />
+                            </td>
+                            <td>
+                                <input type="number" name="maxRenewals" value="@(role.Policy?.MaxRenewals ?? 1)" class="form-control jy-form-control p-1" style="width: 80px;" />
+                            </td>
+                            <td>
+                                <button type="submit" class="jy-btn-secondary p-1 px-3" style="font-size: 12px;">Save Policy</button>
+                            </td>
+                        </form>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

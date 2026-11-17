@@ -1,0 +1,117 @@
+@model List<PULibrary.Models.Loan>
+@{
+    ViewData["Title"] = "Loans";
+    string currentFilter = ViewBag.CurrentFilter as string ?? "all";
+}
+
+<div class="jy-page-heading">
+    <div class="jy-section-label">CIRCULATION / LOANS REGISTER</div>
+    <div class="jy-title-row">
+        <h1 class="jy-page-title">Loans register.</h1>
+        <a asp-action="Circulation" class="jy-btn-primary">Circulation desk →</a>
+    </div>
+    <div class="jy-page-subtitle">Track and audit the lifecycle of every loaned volume across readers and due dates.</div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="d-flex gap-2">
+    <a asp-action="Loans" asp-route-filter="all" class="@(currentFilter == "all" ? "jy-btn-primary" : "jy-btn-secondary")">All loans (@Model.Count)</a>
+    <a asp-action="Loans" asp-route-filter="active" class="@(currentFilter == "active" ? "jy-btn-primary" : "jy-btn-secondary")">Active only</a>
+    <a asp-action="Loans" asp-route-filter="overdue" class="@(currentFilter == "overdue" ? "jy-btn-primary" : "jy-btn-secondary")">Overdue only</a>
+    <a asp-action="Loans" asp-route-filter="returned" class="@(currentFilter == "returned" ? "jy-btn-primary" : "jy-btn-secondary")">Returned</a>
+</div>
+
+<div class="jy-panel">
+    <div class="jy-table-container">
+        <table class="jy-table">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">LOAN ID</th>
+                    <th style="width: 30%;">BOOK / COPY</th>
+                    <th style="width: 20%;">BORROWER</th>
+                    <th style="width: 15%;">TIMELINE</th>
+                    <th style="width: 10%;">STATUS</th>
+                    <th style="width: 15%;">ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    @foreach (var loan in Model)
+                    {
+                        <tr>
+                            <td style="font-weight: 600; font-size: 14px; color: var(--jy-primary-dark);">
+                                #@loan.LoanId
+                            </td>
+                            <td>
+                                <div style="font-weight: 600; font-size: 14px; color: var(--jy-primary-green);">@loan.Copy?.Book?.Title</div>
+                                <div style="font-size: 12px; color: var(--jy-text-muted);">Copy #@loan.CopyId · Shelf: @loan.Copy?.ShelfLocation</div>
+                            </td>
+                            <td>
+                                <div style="font-weight: 600; color: var(--jy-primary-dark);">@loan.User?.Name</div>
+                                <div style="font-size: 12px; color: var(--jy-text-muted);">User @loan.UserId · @loan.User?.Email</div>
+                            </td>
+                            <td>
+                                <div style="font-size: 13px;">Borrowed: @loan.BorrowedAt.ToString("dd MMM yyyy")</div>
+                                <div style="font-size: 13px; font-weight: 600; color: @(loan.IsOverdue ? "var(--jy-badge-red-text)" : "var(--jy-primary-dark)");">
+                                    Due: @loan.DueAt.ToString("dd MMM yyyy HH:mm")
+                                </div>
+                                @if (loan.ReturnedAt != null)
+                                {
+                                    <div style="font-size: 12px; color: var(--jy-primary-green);">Returned: @loan.ReturnedAt.Value.ToString("dd MMM yyyy")</div>
+                                }
+                            </td>
+                            <td>
+                                @if (loan.ReturnedAt != null)
+                                {
+                                    <span class="jy-badge jy-badge-available">
+                                        <span class="jy-badge-dot"></span> Returned
+                                    </span>
+                                }
+                                else if (loan.IsOverdue)
+                                {
+                                    <span class="jy-badge jy-badge-overdue">
+                                        <span class="jy-badge-dot"></span> Overdue
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="jy-badge jy-badge-waiting">
+                                        <span class="jy-badge-dot"></span> Active
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                @if (loan.ReturnedAt == null)
+                                {
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <form asp-action="ReturnLoan" method="post" style="display:inline;">
+                                            <input type="hidden" name="loanId" value="@loan.LoanId" />
+                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                            <button type="submit" class="jy-btn-secondary p-1 px-2" style="font-size: 12px;">Return</button>
+                                        </form>
+                                        <form asp-action="RenewLoan" method="post" style="display:inline;">
+                                            <input type="hidden" name="loanId" value="@loan.LoanId" />
+                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                            <button type="submit" class="jy-btn-secondary p-1 px-2" style="font-size: 12px;">Renew (@loan.RenewalCount)</button>
+                                        </form>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--jy-text-muted); font-size: 12px;">Completed</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No loan records in this view.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

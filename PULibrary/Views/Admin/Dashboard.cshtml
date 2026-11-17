@@ -1,0 +1,317 @@
+@model PULibrary.Models.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="jy-page-heading">
+    <div class="jy-section-label">YOUR LIBRARY AT A GLANCE</div>
+    <div class="jy-title-row">
+        <h1 class="jy-page-title">Good morning, Jamie.</h1>
+        <a asp-action="Circulation" class="jy-btn-primary">Open circulation desk →</a>
+    </div>
+    <div class="jy-page-subtitle">A clear view of lending, reservations and the readers who need a hand.</div>
+</div>
+
+<!-- Summary Metrics -->
+<div class="jy-metrics-row">
+    <!-- Active loans -->
+    <div class="jy-metric-card">
+        <div class="jy-metric-label">Active loans</div>
+        <div class="jy-metric-value">@Model.ActiveLoansCount</div>
+        <a asp-action="Loans" asp-route-filter="active" class="jy-metric-link">View all unreturned loans →</a>
+    </div>
+
+    <!-- Overdue loans -->
+    <div class="jy-metric-card">
+        <div class="jy-metric-label">Overdue loans</div>
+        <div class="jy-metric-value danger">@Model.OverdueLoansCount</div>
+        <a asp-action="Loans" asp-route-filter="overdue" class="jy-metric-link danger">Review overdue loans →</a>
+    </div>
+
+    <!-- Awaiting fulfillment -->
+    <div class="jy-metric-card">
+        <div class="jy-metric-label">Awaiting fulfillment</div>
+        <div class="jy-metric-value">@Model.AwaitingFulfillmentCount</div>
+        <a asp-action="Reservations" class="jy-metric-link">Allocate an available copy →</a>
+    </div>
+
+    <!-- Copies in repair -->
+    <div class="jy-metric-card">
+        <div class="jy-metric-label">Copies in repair</div>
+        <div class="jy-metric-value">@Model.CopiesInRepairCount</div>
+        <a asp-action="Copies" class="jy-metric-link">View damaged copies →</a>
+    </div>
+
+    <!-- Available copies -->
+    <div class="jy-metric-card">
+        <div class="jy-metric-label">Available copies</div>
+        <div class="jy-metric-value">@Model.AvailableCopiesCount</div>
+        <a asp-action="Copies" class="jy-metric-link">Of @Model.TotalCopiesCount physical copies →</a>
+    </div>
+</div>
+
+<!-- Desk Priorities Split Layout -->
+<div class="row g-4 mt-1">
+    <!-- Left Column: Loan priorities -->
+    <div class="col-lg-7 d-flex flex-column gap-4">
+        <!-- Panel 1: Loans needing attention -->
+        <div class="jy-panel">
+            <div class="jy-panel-header">
+                <div>
+                    <div class="jy-panel-heading-title">Loans needing attention</div>
+                    <div class="jy-panel-heading-desc">
+                        @(Model.OverdueLoansCount > 0 ? $"{Model.OverdueLoansCount} unreturned copies have passed their due time." : "No overdue loans at present.")
+                    </div>
+                </div>
+                <a asp-action="Loans" class="jy-btn-secondary">All loans →</a>
+            </div>
+
+            <div class="jy-table-container">
+                <table class="jy-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 45%;">BOOK / BORROWER</th>
+                            <th style="width: 25%;">DUE AT</th>
+                            <th style="width: 15%;">DERIVED STATE</th>
+                            <th style="width: 15%;">ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.OverdueLoans.Any())
+                        {
+                            @foreach (var loan in Model.OverdueLoans)
+                            {
+                                <tr>
+                                    <td>
+                                        <div style="font-weight: 600; color: var(--jy-primary-dark); font-size: 14px;">@loan.BookTitle</div>
+                                        <div style="color: var(--jy-text-muted); font-size: 12px;">@loan.BorrowerName · User @loan.UserId · Loan @loan.LoanId</div>
+                                    </td>
+                                    <td>
+                                        <div style="font-size: 14px; color: var(--jy-primary-dark);">@loan.DueAt.ToString("dd MMM yyyy")</div>
+                                        <div style="font-size: 12px; color: var(--jy-text-muted);">@loan.DueAt.ToString("HH:mm")</div>
+                                    </td>
+                                    <td>
+                                        <span class="jy-badge jy-badge-overdue">
+                                            <span class="jy-badge-dot"></span> Overdue
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form asp-action="ReturnLoan" method="post" style="display:inline;">
+                                            <input type="hidden" name="loanId" value="@loan.LoanId" />
+                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                            <button type="submit" class="btn btn-link p-0 jy-btn-link">Return →</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">All loans are currently up to date!</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="font-size: 12px; color: var(--jy-text-muted);">
+                Active = returned_at is empty. Overdue = active and due_at has passed.
+            </div>
+        </div>
+
+        <!-- Panel 2: Still with a reader -->
+        <div class="jy-panel">
+            <div class="jy-panel-header">
+                <div>
+                    <div class="jy-panel-heading-title">Still with a reader</div>
+                    <div class="jy-panel-heading-desc">Active loans due in the future.</div>
+                </div>
+            </div>
+
+            <div class="jy-table-container">
+                <table class="jy-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 55%;">BOOK / BORROWER</th>
+                            <th style="width: 20%;">COPY</th>
+                            <th style="width: 25%;">DUE AT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.ActiveLoans.Any())
+                        {
+                            @foreach (var loan in Model.ActiveLoans)
+                            {
+                                <tr>
+                                    <td>
+                                        <div style="font-weight: 600; color: var(--jy-primary-dark); font-size: 14px;">@loan.BookTitle</div>
+                                        <div style="color: var(--jy-text-muted); font-size: 12px;">@loan.BorrowerName · User @loan.UserId · Loan @loan.LoanId</div>
+                                    </td>
+                                    <td style="font-size: 14px; color: var(--jy-primary-dark);">
+                                        @loan.CopyId
+                                    </td>
+                                    <td>
+                                        <div style="font-size: 14px; color: var(--jy-primary-green); font-weight: 500;">@loan.DueAt.ToString("dd MMM yyyy")</div>
+                                        <div style="font-size: 12px; color: var(--jy-text-muted);">@loan.DueAt.ToString("HH:mm")</div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-3">No other active loans.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="jy-tip-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <span>Need to extend a loan? Check the borrower’s role policy and renewal count at the desk.</span>
+            </div>
+        </div>
+
+        <!-- Inventory summary banner -->
+        <div class="jy-inventory-box">
+            <div class="jy-inv-item">
+                <div class="jy-inv-label">COLLECTION</div>
+                <div class="jy-inv-value">@Model.TotalBooksCount book records</div>
+            </div>
+            <div class="jy-inv-item">
+                <div class="jy-inv-label">PHYSICAL INVENTORY</div>
+                <div class="jy-inv-value">@Model.TotalCopiesCount copies</div>
+            </div>
+            <div class="jy-inv-item">
+                <div class="jy-inv-label">AVAILABILITY</div>
+                <div class="jy-inv-value">@Model.AvailableCopiesCount ready to issue</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Reservation and copy priorities -->
+    <div class="col-lg-5 d-flex flex-column gap-4">
+        <!-- Panel 3: A reader is waiting (Pending Reservation) -->
+        <div class="jy-panel">
+            <div class="jy-panel-header">
+                <div>
+                    <div class="jy-panel-heading-title">A reader is waiting</div>
+                    <div class="jy-panel-heading-desc">
+                        @(Model.PendingReservation != null ? $"Book reservation {Model.PendingReservation.ReservationId}" : "No pending reservations.")
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.PendingReservation != null)
+            {
+                <div>
+                    <div style="font-weight: 600; font-size: 15px; color: var(--jy-primary-dark);">@Model.PendingReservation.BookTitle</div>
+                    <div style="font-size: 13px; color: var(--jy-text-muted);">
+                        @Model.PendingReservation.ReaderName · User @Model.PendingReservation.UserId · Book @Model.PendingReservation.BookId
+                    </div>
+                </div>
+
+                <div>
+                    <span class="jy-badge jy-badge-waiting">
+                        <span class="jy-badge-dot"></span> Awaiting fulfillment
+                    </span>
+                </div>
+
+                <div style="font-size: 13px; color: var(--jy-text-muted); line-height: 1.4;">
+                    @(Model.PendingReservation.SuggestedAvailableCopyId.HasValue 
+                        ? $"Copy {Model.PendingReservation.SuggestedAvailableCopyId.Value} is available. Reserve the title first, then allocate the matching copy."
+                        : "No available copy in stock right now for this title.")
+                </div>
+
+                @if (Model.PendingReservation.SuggestedAvailableCopyId.HasValue)
+                {
+                    <form asp-action="FulfillReservation" method="post">
+                        <input type="hidden" name="reservationId" value="@Model.PendingReservation.ReservationId" />
+                        <input type="hidden" name="copyId" value="@Model.PendingReservation.SuggestedAvailableCopyId.Value" />
+                        <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                        <button type="submit" class="jy-btn-primary w-100 justify-content-center">Fulfill reservation →</button>
+                    </form>
+                }
+            }
+            else
+            {
+                <div class="text-muted py-2" style="font-size: 13px;">All readers are satisfied; no pending reservations in queue.</div>
+            }
+        </div>
+
+        <!-- Panel 4: Allocated to a reader (Fulfilled Reservation) -->
+        <div class="jy-panel">
+            <div class="jy-panel-header">
+                <div>
+                    <div class="jy-panel-heading-title">Allocated to a reader</div>
+                    <div class="jy-panel-heading-desc">
+                        @(Model.FulfilledReservation != null ? $"Reservation {Model.FulfilledReservation.ReservationId} · Fulfilled" : "No recently fulfilled reservation.")
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.FulfilledReservation != null)
+            {
+                <div>
+                    <div style="font-weight: 600; font-size: 15px; color: var(--jy-primary-dark);">@Model.FulfilledReservation.BookTitle</div>
+                    <div style="font-size: 13px; color: var(--jy-text-muted);">@Model.FulfilledReservation.ReaderName · User @Model.FulfilledReservation.UserId</div>
+                </div>
+
+                <div>
+                    <div class="jy-inv-label">FULFILLED COPY</div>
+                    <div style="font-size: 14px; font-weight: 600; color: var(--jy-primary-dark);">
+                        @(Model.FulfilledReservation.FulfilledCopyId?.ToString() ?? "—") · Book @Model.FulfilledReservation.BookId
+                    </div>
+                </div>
+
+                <div style="font-size: 13px; color: var(--jy-text-muted);">
+                    Reserved @Model.FulfilledReservation.ReservedAt.ToString("dd MMM yyyy 'at' HH:mm")
+                </div>
+            }
+            else
+            {
+                <div class="text-muted py-2" style="font-size: 13px;">No fulfilled reservations yet.</div>
+            }
+        </div>
+
+        <!-- Panel 5: Copy in repair -->
+        <div class="jy-panel">
+            <div class="jy-panel-header">
+                <div>
+                    <div class="jy-panel-heading-title">Copy in repair</div>
+                    <div class="jy-panel-heading-desc">
+                        @(Model.CopyInRepair != null ? $"Copy {Model.CopyInRepair.CopyId} · Book {Model.CopyInRepair.BookId}" : "No copies in repair.")
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.CopyInRepair != null)
+            {
+                <div>
+                    <div style="font-weight: 600; font-size: 15px; color: var(--jy-primary-dark);">@Model.CopyInRepair.BookTitle</div>
+                    <div style="font-size: 13px; color: var(--jy-text-muted);">
+                        Condition: @Model.CopyInRepair.CopyCondition.ToLower() · Shelf: @Model.CopyInRepair.ShelfLocation
+                    </div>
+                </div>
+
+                <div>
+                    <span class="jy-badge jy-badge-overdue">
+                        <span class="jy-badge-dot"></span> Unavailable
+                    </span>
+                </div>
+
+                <div style="font-size: 13px; color: var(--jy-text-muted); line-height: 1.4;">
+                    Copy @Model.CopyInRepair.CopyId is damaged and unavailable while in repair. Manage its condition or report a lost copy from Copies.
+                </div>
+
+                <a asp-action="Copies" class="jy-btn-secondary justify-content-center">Manage copy →</a>
+            }
+            else
+            {
+                <div class="text-muted py-2" style="font-size: 13px;">All collection copies are in fair or good condition.</div>
+            }
+        </div>
+    </div>
+</div>

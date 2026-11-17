@@ -1,0 +1,81 @@
+@model List<PULibrary.Models.User>
+@{
+    ViewData["Title"] = "Users";
+}
+
+<div class="jy-page-heading">
+    <div class="jy-section-label">MEMBERSHIP / ACCOUNTS</div>
+    <div class="jy-title-row">
+        <h1 class="jy-page-title">Users and role assignments.</h1>
+        <a asp-action="Policies" class="jy-btn-secondary">Borrowing policies →</a>
+    </div>
+    <div class="jy-page-subtitle">Registered readers and library staff, role assignments and active borrow balances.</div>
+</div>
+
+<div class="jy-panel">
+    <div class="jy-panel-header">
+        <div>
+            <div class="jy-panel-heading-title">Registered readers and staff</div>
+            <div class="jy-panel-heading-desc">@Model.Count user accounts enrolled</div>
+        </div>
+    </div>
+
+    <div class="jy-table-container">
+        <table class="jy-table">
+            <thead>
+                <tr>
+                    <th style="width: 12%;">USER ID</th>
+                    <th style="width: 25%;">NAME & USERNAME</th>
+                    <th style="width: 18%;">ROLE</th>
+                    <th style="width: 20%;">CONTACT</th>
+                    <th style="width: 12%;">ACTIVE LOANS</th>
+                    <th style="width: 13%;">STATUS</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    int activeCount = user.Loans.Count(l => l.ReturnedAt == null);
+                    short maxLoans = user.Role?.Policy?.MaxLoans ?? 0;
+                    <tr>
+                        <td style="font-weight: 600; font-size: 14px; color: var(--jy-primary-dark);">
+                            #@user.UserId
+                        </td>
+                        <td>
+                            <div style="font-weight: 600; font-size: 14px; color: var(--jy-primary-dark);">@user.Name</div>
+                            <div style="font-size: 12px; color: var(--jy-text-muted);">@@@user.Username</div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 600; color: var(--jy-primary-green);">@user.Role?.RoleName</div>
+                            <div style="font-size: 11px; color: var(--jy-text-muted);">Role @user.RoleId</div>
+                        </td>
+                        <td>
+                            <div style="font-size: 13px; color: var(--jy-primary-dark);">@user.Email</div>
+                            <div style="font-size: 12px; color: var(--jy-text-muted);">Phone: @user.Phone</div>
+                        </td>
+                        <td>
+                            <span style="font-weight: 600; color: @(activeCount >= maxLoans ? "var(--jy-badge-red-text)" : "var(--jy-primary-dark)");">
+                                @activeCount / @maxLoans
+                            </span>
+                            <span style="font-size: 11px; color: var(--jy-text-muted);">allowed</span>
+                        </td>
+                        <td>
+                            @if (user.Status == "Active")
+                            {
+                                <span class="jy-badge jy-badge-available">
+                                    <span class="jy-badge-dot"></span> Active
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="jy-badge jy-badge-overdue">
+                                    <span class="jy-badge-dot"></span> Suspended
+                                </span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

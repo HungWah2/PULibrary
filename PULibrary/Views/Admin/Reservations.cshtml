@@ -1,0 +1,108 @@
+@model List<PULibrary.Models.Reservation>
+@{
+    ViewData["Title"] = "Reservations";
+    var availableCopies = ViewBag.AvailableCopies as List<PULibrary.Models.BookCopy> ?? new();
+}
+
+<div class="jy-page-heading">
+    <div class="jy-section-label">READERS & QUEUES / RESERVATIONS</div>
+    <div class="jy-title-row">
+        <h1 class="jy-page-title">Book reservations.</h1>
+    </div>
+    <div class="jy-page-subtitle">Manage holds placed by readers when titles are in high demand or pending fulfillment.</div>
+</div>
+
+<div class="jy-panel">
+    <div class="jy-panel-header">
+        <div>
+            <div class="jy-panel-heading-title">Reservation hold queue</div>
+            <div class="jy-panel-heading-desc">@Model.Count reservations logged in system</div>
+        </div>
+    </div>
+
+    <div class="jy-table-container">
+        <table class="jy-table">
+            <thead>
+                <tr>
+                    <th style="width: 12%;">RESERVATION ID</th>
+                    <th style="width: 30%;">BOOK TITLE</th>
+                    <th style="width: 20%;">READER</th>
+                    <th style="width: 15%;">RESERVED AT</th>
+                    <th style="width: 13%;">STATUS</th>
+                    <th style="width: 10%;">ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    @foreach (var res in Model)
+                    {
+                        <tr>
+                            <td style="font-weight: 600; font-size: 14px; color: var(--jy-primary-dark);">
+                                #@res.ReservationId
+                            </td>
+                            <td>
+                                <div style="font-weight: 600; font-size: 14px; color: var(--jy-primary-green);">@res.Book?.Title</div>
+                                <div style="font-size: 12px; color: var(--jy-text-muted);">Book ID @res.BookId</div>
+                            </td>
+                            <td>
+                                <div style="font-weight: 600; color: var(--jy-primary-dark);">@res.User?.Name</div>
+                                <div style="font-size: 12px; color: var(--jy-text-muted);">User @res.UserId · @res.User?.Email</div>
+                            </td>
+                            <td style="font-size: 13px; color: var(--jy-text-muted);">
+                                @res.ReservedAt.ToString("dd MMM yyyy HH:mm")
+                            </td>
+                            <td>
+                                @if (res.Status == "PENDING")
+                                {
+                                    <span class="jy-badge jy-badge-waiting">
+                                        <span class="jy-badge-dot"></span> Awaiting fulfillment
+                                    </span>
+                                }
+                                else if (res.Status == "FULFILLED")
+                                {
+                                    <span class="jy-badge jy-badge-available">
+                                        <span class="jy-badge-dot"></span> Fulfilled (Copy #@res.FulfilledCopyId)
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="jy-badge">@res.Status</span>
+                                }
+                            </td>
+                            <td>
+                                @if (res.Status == "PENDING")
+                                {
+                                    var eligibleCopies = availableCopies.Where(c => c.BookId == res.BookId).ToList();
+                                    if (eligibleCopies.Any())
+                                    {
+                                        <form asp-action="FulfillReservation" method="post">
+                                            <input type="hidden" name="reservationId" value="@res.ReservationId" />
+                                            <input type="hidden" name="copyId" value="@eligibleCopies.First().CopyId" />
+                                            <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                            <button type="submit" class="jy-btn-primary p-1 px-2" style="font-size: 12px;">Fulfill (#@eligibleCopies.First().CopyId)</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span style="font-size: 11px; color: var(--jy-badge-red-text);">No copies free</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span style="font-size: 12px; color: var(--jy-text-muted);">Allocated</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No reservations on file.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
