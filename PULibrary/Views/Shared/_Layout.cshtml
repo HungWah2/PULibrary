@@ -43,95 +43,115 @@
                 </div>
             </div>
 
-            <!-- READER PORTAL SECTION -->
-            <div class="jy-nav-section">
-                <div class="jy-nav-group-label">READER PORTAL</div>
-                <nav class="jy-nav-menu">
-                    <a asp-controller="Catalog" asp-action="Index" class="jy-nav-item @(currentController == "Catalog" ? "active" : "")">
-                        <span class="jy-nav-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        </span>
-                        <span class="jy-nav-text">Browse catalog</span>
-                    </a>
+            @if (currentController == "Admin")
+            {
+                <!-- LIBRARIAN STAFF WORKSPACE SECTION (Admin UI) -->
+                <div class="jy-nav-section">
+                    <div class="jy-nav-group-label">LIBRARIAN WORKSPACE</div>
 
-                    <a asp-controller="User" asp-action="Profile" asp-route-id="@userId" class="jy-nav-item @(currentController == "User" ? "active" : "")">
-                        <span class="jy-nav-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        </span>
-                        <span class="jy-nav-text">My loans &amp; history</span>
-                    </a>
-                </nav>
-            </div>
+                    <nav class="jy-nav-menu">
+                        <a asp-controller="Admin" asp-action="Dashboard" class="jy-nav-item @(currentAction == "Dashboard" ? "active" : "")">
+                            <span class="jy-nav-icon">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                            </span>
+                            <span class="jy-nav-text">Dashboard</span>
+                        </a>
 
-            <!-- LIBRARIAN STAFF WORKSPACE SECTION -->
-            <div class="jy-nav-section">
-                <div class="jy-nav-group-label">LIBRARIAN WORKSPACE</div>
+                        <a asp-controller="Admin" asp-action="Books" class="jy-nav-item @(currentAction == "Books" ? "active" : "")">
+                            <span class="jy-nav-icon">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                            </span>
+                            <span class="jy-nav-text">Book catalog</span>
+                        </a>
 
-                <nav class="jy-nav-menu">
-                    <a asp-controller="Admin" asp-action="Dashboard" class="jy-nav-item @(currentController == "Admin" && currentAction == "Dashboard" ? "active" : "")">
-                        <span class="jy-nav-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
-                        </span>
-                        <span class="jy-nav-text">Dashboard</span>
-                    </a>
+                        <a asp-controller="Admin" asp-action="Copies" class="jy-nav-item @(currentAction == "Copies" ? "active" : "")">
+                            <span class="jy-nav-icon">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M6 6h10"></path><path d="M6 10h10"></path></svg>
+                            </span>
+                            <span class="jy-nav-text">Copies</span>
+                        </a>
 
-                    <a asp-controller="Admin" asp-action="Books" class="jy-nav-item @(currentController == "Admin" && currentAction == "Books" ? "active" : "")">
-                        <span class="jy-nav-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-                        </span>
-                        <span class="jy-nav-text">Book catalog</span>
-                    </a>
+                        <a asp-controller="Admin" asp-action="Loans" class="jy-nav-item @(currentAction == "Loans" ? "active" : "")">
+                            <span class="jy-nav-icon">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="14" rx="2"></rect><path d="M16 3H4a2 2 0 0 0-2 2v14"></path></svg>
+                            </span>
+                            <span class="jy-nav-text">Loans</span>
+                        </a>
 
-                    <a asp-controller="Admin" asp-action="Copies" class="jy-nav-item @(currentController == "Admin" && currentAction == "Copies" ? "active" : "")">
-                        <span class="jy-nav-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path><path d="M6 6h10"></path><path d="M6 10h10"></path></svg>
-                        </span>
-                        <span class="jy-nav-text">Copies</span>
-                    </a>
+                        <a asp-controller="Admin" asp-action="Circulation" class="jy-nav-item @(currentAction == "Circulation" ? "active" : "")">
+                            <span class="jy-nav-icon">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 3 4 4-4 4"></path><path d="M20 7H4"></path><path d="m8 21-4-4 4-4"></path><path d="M4 17h16"></path></svg>
+                            </span>
+                            <span class="jy-nav-text">Circulation desk</span>
+                        </a>
 
-                    <a asp-controller="Admin" asp-action="Loans" class="jy-nav-item @(currentController == "Admin" && currentAction == "Loans" ? "active" : "")">
-                        <span class="jy-nav-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="14" rx="2"></rect><path d="M16 3H4a2 2 0 0 0-2 2v14"></path></svg>
-                        </span>
-                        <span class="jy-nav-text">Loans</span>
-                    </a>
+                        <a asp-controller="Admin" asp-action="Reservations" class="jy-nav-item @(currentAction == "Reservations" ? "active" : "")">
+                            <span class="jy-nav-icon">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg>
+                            </span>
+                            <span class="jy-nav-text">Reservations</span>
+                        </a>
 
-                    <a asp-controller="Admin" asp-action="Circulation" class="jy-nav-item @(currentController == "Admin" && currentAction == "Circulation" ? "active" : "")">
-                        <span class="jy-nav-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 3 4 4-4 4"></path><path d="M20 7H4"></path><path d="m8 21-4-4 4-4"></path><path d="M4 17h16"></path></svg>
-                        </span>
-                        <span class="jy-nav-text">Circulation desk</span>
-                    </a>
+                        <a asp-controller="Admin" asp-action="Users" class="jy-nav-item @(currentAction == "Users" ? "active" : "")">
+                            <span class="jy-nav-icon">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            </span>
+                            <span class="jy-nav-text">Users</span>
+                        </a>
 
-                    <a asp-controller="Admin" asp-action="Reservations" class="jy-nav-item @(currentController == "Admin" && currentAction == "Reservations" ? "active" : "")">
-                        <span class="jy-nav-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path></svg>
-                        </span>
-                        <span class="jy-nav-text">Reservations</span>
-                    </a>
+                        <a asp-controller="Admin" asp-action="Policies" class="jy-nav-item @(currentAction == "Policies" ? "active" : "")">
+                            <span class="jy-nav-icon">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" x2="14" y1="4" y2="4"></line><line x1="10" x2="3" y1="4" y2="4"></line><line x1="21" x2="12" y1="12" y2="12"></line><line x1="8" x2="3" y1="12" y2="12"></line><line x1="21" x2="16" y1="20" y2="20"></line><line x1="12" x2="3" y1="20" y2="20"></line><line x1="14" x2="14" y1="2" y2="6"></line><line x1="8" x2="8" y1="10" y2="14"></line><line x1="16" x2="16" y1="18" y2="22"></line></svg>
+                            </span>
+                            <span class="jy-nav-text">Roles & policies</span>
+                        </a>
 
-                    <a asp-controller="Admin" asp-action="Users" class="jy-nav-item @(currentController == "Admin" && currentAction == "Users" ? "active" : "")">
-                        <span class="jy-nav-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                        </span>
-                        <span class="jy-nav-text">Users</span>
-                    </a>
+                        <a asp-controller="Admin" asp-action="Metadata" class="jy-nav-item @(currentAction == "Metadata" ? "active" : "")">
+                            <span class="jy-nav-icon">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"></path><path d="M7 7h.01"></path></svg>
+                            </span>
+                            <span class="jy-nav-text">Catalog metadata</span>
+                        </a>
+                    </nav>
 
-                    <a asp-controller="Admin" asp-action="Policies" class="jy-nav-item @(currentController == "Admin" && currentAction == "Policies" ? "active" : "")">
-                        <span class="jy-nav-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="21" x2="14" y1="4" y2="4"></line><line x1="10" x2="3" y1="4" y2="4"></line><line x1="21" x2="12" y1="12" y2="12"></line><line x1="8" x2="3" y1="12" y2="12"></line><line x1="21" x2="16" y1="20" y2="20"></line><line x1="12" x2="3" y1="20" y2="20"></line><line x1="14" x2="14" y1="2" y2="6"></line><line x1="8" x2="8" y1="10" y2="14"></line><line x1="16" x2="16" y1="18" y2="22"></line></svg>
-                        </span>
-                        <span class="jy-nav-text">Roles & policies</span>
-                    </a>
+                    <div class="mt-3 px-2">
+                        <a asp-controller="Catalog" asp-action="Index" class="jy-btn-secondary w-100 justify-content-center" style="font-size: 12px; padding: 6px 10px;">
+                            View Reader Portal ↗
+                        </a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- READER PORTAL SECTION (User UI) -->
+                <div class="jy-nav-section">
+                    <div class="jy-nav-group-label">READER PORTAL</div>
+                    <nav class="jy-nav-menu">
+                        <a asp-controller="Catalog" asp-action="Index" class="jy-nav-item @(currentController == "Catalog" ? "active" : "")">
+                            <span class="jy-nav-icon">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            </span>
+                            <span class="jy-nav-text">Browse catalog</span>
+                        </a>
 
-                    <a asp-controller="Admin" asp-action="Metadata" class="jy-nav-item @(currentController == "Admin" && currentAction == "Metadata" ? "active" : "")">
-                        <span class="jy-nav-icon">
-                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"></path><path d="M7 7h.01"></path></svg>
-                        </span>
-                        <span class="jy-nav-text">Catalog metadata</span>
-                    </a>
-                </nav>
-            </div>
+                        <a asp-controller="User" asp-action="Profile" asp-route-id="@userId" class="jy-nav-item @(currentController == "User" ? "active" : "")">
+                            <span class="jy-nav-icon">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            </span>
+                            <span class="jy-nav-text">My loans &amp; history</span>
+                        </a>
+                    </nav>
+
+                    @if (isStaff)
+                    {
+                        <div class="mt-3 px-2">
+                            <a asp-controller="Admin" asp-action="Dashboard" class="jy-btn-primary w-100 justify-content-center" style="font-size: 12px; padding: 6px 10px;">
+                                Librarian Workspace →
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
 
             <!-- Workspace Guide Card -->
             <div class="jy-workspace-guide-card">
@@ -170,6 +190,14 @@
                     <span class="jy-session-time">@DateTime.Now.ToString("dddd, dd MMMM yyyy · HH:mm")</span>
                     <span class="jy-session-divider"></span>
                     <span class="jy-session-badge">@initials · @userRole</span>
+                    @if (currentController == "Admin")
+                    {
+                        <a asp-controller="Catalog" asp-action="Index" class="jy-btn-secondary ms-2" style="font-size: 11px; padding: 3px 8px;">Reader UI ↗</a>
+                    }
+                    else if (isStaff)
+                    {
+                        <a asp-controller="Admin" asp-action="Dashboard" class="jy-btn-secondary ms-2" style="font-size: 11px; padding: 3px 8px;">Admin UI →</a>
+                    }
                     <a asp-controller="Account" asp-action="SignIn" class="jy-btn-secondary ms-2" style="font-size: 11px; padding: 3px 8px;">Switch user</a>
                 </div>
             </header>

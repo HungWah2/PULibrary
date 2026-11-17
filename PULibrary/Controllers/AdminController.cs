@@ -14,6 +14,17 @@ public class AdminController : Controller
         _context = context;
     }
 
+    public override void OnActionExecuting(Microsoft.AspNetCore.Mvc.Filters.ActionExecutingContext context)
+    {
+        base.OnActionExecuting(context);
+        int? roleId = context.HttpContext.Session.GetInt32("RoleId");
+        if (roleId.HasValue && roleId.Value < 3)
+        {
+            context.Result = new RedirectToActionResult("Index", "Catalog", null);
+            TempData["ErrorMessage"] = "Access restricted: The Librarian Workspace is reserved for staff members.";
+        }
+    }
+
     // GET: /Admin or /Admin/Index or /Admin/Dashboard
     public async Task<IActionResult> Index()
     {

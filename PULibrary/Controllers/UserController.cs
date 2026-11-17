@@ -73,4 +73,27 @@ public class UserController : Controller
         TempData["SuccessMessage"] = $"Loan extended by {extensionDays} days! New due date is {loan.DueAt:dd MMM yyyy}.";
         return RedirectToAction(nameof(Profile), new { id = loan.UserId });
     }
+
+    // POST: /User/CancelReservation
+    [HttpPost]
+    public async Task<IActionResult> CancelReservation(int reservationId)
+    {
+        int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 2481;
+        var res = await _context.Reservations
+            .Include(r => r.FulfilledCopy)
+            .FirstOrDefaultAsync(r => r.ReservationId == reservationId && r.UserId == currentUserId);
+
+        if (res != null)
+        {
+            if (res.FulfilledCopy != null)
+            {
+                res.FulfilledCopy.Status = "Available";
+            }
+            res.Status = "CANCELLED";
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"Reservation #{reservationId} has been cancelled.";
+        }
+
+        return RedirectToAction(nameof(Profile), new { id = currentUserId });
+    }
 }

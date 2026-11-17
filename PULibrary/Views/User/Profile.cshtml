@@ -220,9 +220,10 @@
             <thead>
                 <tr>
                     <th style="width: 15%;">RESERVATION ID</th>
-                    <th style="width: 40%;">TITLE</th>
+                    <th style="width: 35%;">TITLE</th>
                     <th style="width: 20%;">REQUESTED ON</th>
-                    <th style="width: 25%;">HOLD STATUS</th>
+                    <th style="width: 20%;">HOLD STATUS</th>
+                    <th style="width: 10%;">ACTION</th>
                 </tr>
             </thead>
             <tbody>
@@ -235,7 +236,9 @@
                                 #@res.ReservationId
                             </td>
                             <td>
-                                <div style="font-weight: 600; color: var(--jy-primary-green);">@res.Book?.Title</div>
+                                <a asp-controller="Catalog" asp-action="Detail" asp-route-id="@res.BookId" style="text-decoration: none;">
+                                    <div style="font-weight: 600; color: var(--jy-primary-green);">@res.Book?.Title ↗</div>
+                                </a>
                                 <div style="font-size: 12px; color: var(--jy-text-muted);">Book #@res.BookId</div>
                             </td>
                             <td style="font-size: 13px; color: var(--jy-text-muted);">
@@ -245,18 +248,31 @@
                                 @if (res.Status == "PENDING")
                                 {
                                     <span class="jy-badge jy-badge-waiting">
-                                        <span class="jy-badge-dot"></span> In Queue / Awaiting Copy
+                                        <span class="jy-badge-dot"></span> In Queue
                                     </span>
                                 }
                                 else if (res.Status == "FULFILLED")
                                 {
                                     <span class="jy-badge jy-badge-available">
-                                        <span class="jy-badge-dot"></span> Ready for Pickup (Copy #@res.FulfilledCopyId)
+                                        <span class="jy-badge-dot"></span> Ready for Pickup (#@res.FulfilledCopyId)
                                     </span>
                                 }
                                 else
                                 {
                                     <span class="jy-badge">@res.Status</span>
+                                }
+                            </td>
+                            <td>
+                                @if (res.Status == "PENDING" || res.Status == "FULFILLED")
+                                {
+                                    <form asp-action="CancelReservation" method="post" style="display:inline;">
+                                        <input type="hidden" name="reservationId" value="@res.ReservationId" />
+                                        <button type="submit" class="jy-btn-link text-danger" style="font-size: 12px; text-decoration: underline; background: none; border: none; padding: 0;">Cancel</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span style="font-size: 12px; color: var(--jy-text-muted);">—</span>
                                 }
                             </td>
                         </tr>
@@ -265,7 +281,7 @@
                 else
                 {
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-3">No active hold requests.</td>
+                        <td colspan="5" class="text-center text-muted py-3">No active hold requests.</td>
                     </tr>
                 }
             </tbody>
