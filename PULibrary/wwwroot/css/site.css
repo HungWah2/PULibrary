@@ -371,43 +371,49 @@ body.jy-app-body {
 /* Buttons */
 .jy-btn-primary {
     background-color: var(--jy-primary-green);
-    border: 1px solid var(--jy-primary-green);
+    border: 1.5px solid var(--jy-primary-green);
     color: #fffdf8;
-    padding: 8px 18px;
+    height: 40px;
+    padding: 0 18px;
     border-radius: 6px;
     font-size: 14px;
     font-weight: 600;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.15s ease;
 }
 
 .jy-btn-primary:hover {
     background-color: var(--jy-primary-green-hover);
+    border-color: var(--jy-primary-green-hover);
     color: #fffdf8;
 }
 
 .jy-btn-secondary {
     background-color: var(--jy-card-bg);
-    border: 1px solid var(--jy-border);
+    border: 1.5px solid var(--jy-border);
     color: var(--jy-primary-green);
-    padding: 6px 14px;
+    height: 40px;
+    padding: 0 18px;
     border-radius: 6px;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.15s ease;
 }
 
 .jy-btn-secondary:hover {
     background-color: #f1efea;
+    border-color: var(--jy-primary-green);
     color: var(--jy-primary-green);
 }
 

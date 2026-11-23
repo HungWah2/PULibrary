@@ -99,7 +99,7 @@ public class UserController : Controller
 
     // POST: /User/UpdateProfile
     [HttpPost]
-    public async Task<IActionResult> UpdateProfile(string name, string email, string phone, string? newPassword)
+    public async Task<IActionResult> UpdateProfile(string name, string? username, string email, string phone, string? newPassword)
     {
         int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 2481;
         var user = await _context.Users.FindAsync(currentUserId);
@@ -112,7 +112,23 @@ public class UserController : Controller
         if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email))
         {
             TempData["ErrorMessage"] = "Name and Email are required fields.";
-            return RedirectToAction(nameof(Profile));
+            return RedirectToAction(nameof(Profile), new { id = currentUserId });
+        }
+
+        // Validate and update username if provided
+        if (!string.IsNullOrWhiteSpace(username))
+        {
+            var cleanUsername = username.Trim().ToLower();
+            if (cleanUsername.Length > 20) cleanUsername = cleanUsername.Substring(0, 20);
+
+            var isTaken = await _context.Users.AnyAsync(u => u.UserId != currentUserId && u.Username.ToLower() == cleanUsername);
+            if (isTaken)
+            {
+                TempData["ErrorMessage"] = $"The username '{cleanUsername}' is already taken by another account. Please choose a different username.";
+                return RedirectToAction(nameof(Profile), new { id = currentUserId });
+            }
+
+            user.Username = cleanUsername;
         }
 
         user.Name = name.Trim().Length > 30 ? name.Trim().Substring(0, 30) : name.Trim();
@@ -136,7 +152,7 @@ public class UserController : Controller
         // Update session identity so the UI updates immediately
         HttpContext.Session.SetString("UserName", user.Name);
 
-        TempData["SuccessMessage"] = "Your account profile has been customized successfully!";
+        TempData["SuccessMessage"] = "Your account profile and login username have been customized successfully!";
         return RedirectToAction(nameof(Profile), new { id = currentUserId });
     }
 }
