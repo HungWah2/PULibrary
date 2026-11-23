@@ -188,15 +188,7 @@
                     <span class="jy-session-time">@DateTime.Now.ToString("dddd, dd MMMM yyyy · HH:mm")</span>
                     <span class="jy-session-divider"></span>
                     <span class="jy-session-badge">@initials · @userRole</span>
-                    @if (currentController == "Admin")
-                    {
-                        <a asp-controller="Catalog" asp-action="Index" class="jy-btn-secondary ms-2" style="font-size: 11px; padding: 3px 8px;">Reader UI ↗</a>
-                    }
-                    else if (isStaff)
-                    {
-                        <a asp-controller="Admin" asp-action="Dashboard" class="jy-btn-secondary ms-2" style="font-size: 11px; padding: 3px 8px;">Admin UI →</a>
-                    }
-                    <a asp-controller="Account" asp-action="SignIn" class="jy-btn-secondary ms-2" style="font-size: 11px; padding: 3px 8px;">Switch user</a>
+                    <a asp-controller="Account" asp-action="SignOut" class="jy-btn-secondary ms-2" style="font-size: 11px; padding: 3px 8px;">Log out</a>
                 </div>
             </header>
 
