@@ -155,13 +155,6 @@
                 </div>
             }
 
-            <!-- Workspace Guide Card -->
-            <div class="jy-workspace-guide-card">
-                <div class="jy-guide-title">A place for every reader.</div>
-                <div class="jy-guide-desc">Collection, circulation and people, connected.</div>
-                <a asp-controller="Catalog" asp-action="Index" class="jy-guide-link">Discover collection →</a>
-            </div>
-
             <div class="jy-nav-spacer"></div>
 
             <!-- Active User Account Profile Card -->
@@ -188,7 +181,7 @@
                     <span class="jy-session-time">@DateTime.Now.ToString("dddd, dd MMMM yyyy · HH:mm")</span>
                     <span class="jy-session-divider"></span>
                     <span class="jy-session-badge">@initials · @userRole</span>
-                    <a asp-controller="Account" asp-action="SignOut" class="jy-btn-secondary ms-2" style="font-size: 11px; padding: 3px 8px;">Log out</a>
+                    <a asp-controller="Account" asp-action="SignOut" class="jy-btn-secondary ms-2" style="font-size: 13.5px; font-weight: 600; padding: 6px 14px;">Log out</a>
                 </div>
             </header>
 

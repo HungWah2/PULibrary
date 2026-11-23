@@ -60,7 +60,7 @@ body.jy-app-body {
 .jy-brand-block {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .jy-brand-logo {
@@ -74,23 +74,25 @@ body.jy-app-body {
 .jy-brand-text {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
 }
 
 .jy-brand-title {
     font-family: var(--font-heading);
-    font-size: 22px;
+    font-size: 25px;
     font-weight: 500;
     color: var(--jy-primary-dark);
-    line-height: 1.2;
+    line-height: 1.25;
+    letter-spacing: 0.02em;
 }
 
 .jy-brand-subtitle {
     font-family: var(--font-ui);
-    font-size: 10px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
     color: var(--jy-text-muted);
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
 }
 
 /* Navigation items */
@@ -258,7 +260,7 @@ body.jy-app-body {
     align-items: center;
     gap: 8px;
     color: var(--jy-text-muted);
-    font-size: 13px;
+    font-size: 16px;
 }
 
 .jy-breadcrumb-separator {
@@ -267,18 +269,21 @@ body.jy-app-body {
 
 .jy-breadcrumb-current {
     color: var(--jy-primary-dark);
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 16px;
 }
 
 .jy-session-details {
     display: flex;
     align-items: center;
     gap: 18px;
-    font-size: 13px;
+    font-size: 14.5px;
 }
 
 .jy-session-time {
-    color: var(--jy-text-muted);
+    color: #525c4e;
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .jy-session-divider {
@@ -289,8 +294,8 @@ body.jy-app-body {
 
 .jy-session-badge {
     color: var(--jy-primary-green);
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: 600;
 }
 
 /* Alert Boxes */
