@@ -12,7 +12,7 @@
     <!-- Bootstrap 5 CSS -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <!-- Custom Figma Design System Stylesheet -->
-    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body class="jy-app-body">
     @{
@@ -173,7 +173,7 @@
         <!-- Main Workspace Area -->
         <main class="jy-workspace-main">
             <!-- Utility Bar -->
-            <header class="jy-utility-bar">
+            <header class="jy-utility-bar" style="position: -webkit-sticky; position: sticky; top: 0; z-index: 1020; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);">
                 <div class="jy-breadcrumb">
                     <span class="jy-breadcrumb-current">@(ViewData["Title"] ?? "Dashboard")</span>
                 </div>
