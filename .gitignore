@@ -24,3 +24,4 @@ ehthumbs.db
 [Dd]esktop.ini
 $RECYCLE.BIN/
 .DS_Store
+database_export.sql

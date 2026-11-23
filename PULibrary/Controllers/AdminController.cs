@@ -615,9 +615,288 @@ public class AdminController : Controller
     // GET: /Admin/Metadata
     public async Task<IActionResult> Metadata()
     {
-        ViewBag.Authors = await _context.Authors.Include(a => a.AssociateBookAuthors).ToListAsync();
-        ViewBag.Publishers = await _context.Publishers.Include(p => p.AssociateBookPublishers).ToListAsync();
-        ViewBag.Categories = await _context.Categories.Include(c => c.AssociateBookCategories).ToListAsync();
+        ViewBag.Authors = await _context.Authors.Include(a => a.AssociateBookAuthors).OrderBy(a => a.AuthorName).ToListAsync();
+        ViewBag.Publishers = await _context.Publishers.Include(p => p.AssociateBookPublishers).OrderBy(p => p.PublisherName).ToListAsync();
+        ViewBag.Categories = await _context.Categories.Include(c => c.AssociateBookCategories).OrderBy(c => c.CategoryName).ToListAsync();
         return View();
+    }
+
+    // POST: /Admin/AddAuthor
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddAuthor(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Author name cannot be empty.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        string trimmedName = name.Trim();
+        if (trimmedName.Length > 30)
+        {
+            TempData["ErrorMessage"] = "Author name cannot exceed 30 characters.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        bool exists = await _context.Authors.AnyAsync(a => a.AuthorName.ToLower() == trimmedName.ToLower());
+        if (exists)
+        {
+            TempData["ErrorMessage"] = $"Author '{trimmedName}' already exists.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        _context.Authors.Add(new Author { AuthorName = trimmedName });
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = $"Author '{trimmedName}' added successfully.";
+        return RedirectToAction(nameof(Metadata));
+    }
+
+    // POST: /Admin/UpdateAuthor
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateAuthor(short authorId, string name)
+    {
+        var author = await _context.Authors.FindAsync(authorId);
+        if (author == null)
+        {
+            TempData["ErrorMessage"] = "Author not found.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Author name cannot be empty.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        string trimmedName = name.Trim();
+        if (trimmedName.Length > 30)
+        {
+            TempData["ErrorMessage"] = "Author name cannot exceed 30 characters.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        bool duplicate = await _context.Authors.AnyAsync(a => a.AuthorId != authorId && a.AuthorName.ToLower() == trimmedName.ToLower());
+        if (duplicate)
+        {
+            TempData["ErrorMessage"] = $"Another author with the name '{trimmedName}' already exists.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        author.AuthorName = trimmedName;
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = $"Author '{trimmedName}' updated successfully.";
+        return RedirectToAction(nameof(Metadata));
+    }
+
+    // POST: /Admin/DeleteAuthor
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAuthor(short authorId)
+    {
+        var author = await _context.Authors.Include(a => a.AssociateBookAuthors).FirstOrDefaultAsync(a => a.AuthorId == authorId);
+        if (author == null)
+        {
+            TempData["ErrorMessage"] = "Author not found.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        if (author.AssociateBookAuthors.Any())
+        {
+            TempData["ErrorMessage"] = $"Cannot delete '{author.AuthorName}' because it is linked to {author.AssociateBookAuthors.Count} book title(s).";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        _context.Authors.Remove(author);
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = $"Author '{author.AuthorName}' deleted successfully.";
+        return RedirectToAction(nameof(Metadata));
+    }
+
+    // POST: /Admin/AddPublisher
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddPublisher(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Publisher name cannot be empty.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        string trimmedName = name.Trim();
+        if (trimmedName.Length > 30)
+        {
+            TempData["ErrorMessage"] = "Publisher name cannot exceed 30 characters.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        bool exists = await _context.Publishers.AnyAsync(p => p.PublisherName.ToLower() == trimmedName.ToLower());
+        if (exists)
+        {
+            TempData["ErrorMessage"] = $"Publisher '{trimmedName}' already exists.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        _context.Publishers.Add(new Publisher { PublisherName = trimmedName });
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = $"Publisher '{trimmedName}' added successfully.";
+        return RedirectToAction(nameof(Metadata));
+    }
+
+    // POST: /Admin/UpdatePublisher
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdatePublisher(short publisherId, string name)
+    {
+        var pub = await _context.Publishers.FindAsync(publisherId);
+        if (pub == null)
+        {
+            TempData["ErrorMessage"] = "Publisher not found.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Publisher name cannot be empty.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        string trimmedName = name.Trim();
+        if (trimmedName.Length > 30)
+        {
+            TempData["ErrorMessage"] = "Publisher name cannot exceed 30 characters.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        bool duplicate = await _context.Publishers.AnyAsync(p => p.PublisherId != publisherId && p.PublisherName.ToLower() == trimmedName.ToLower());
+        if (duplicate)
+        {
+            TempData["ErrorMessage"] = $"Another publisher with the name '{trimmedName}' already exists.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        pub.PublisherName = trimmedName;
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = $"Publisher '{trimmedName}' updated successfully.";
+        return RedirectToAction(nameof(Metadata));
+    }
+
+    // POST: /Admin/DeletePublisher
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeletePublisher(short publisherId)
+    {
+        var pub = await _context.Publishers.Include(p => p.AssociateBookPublishers).FirstOrDefaultAsync(p => p.PublisherId == publisherId);
+        if (pub == null)
+        {
+            TempData["ErrorMessage"] = "Publisher not found.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        if (pub.AssociateBookPublishers.Any())
+        {
+            TempData["ErrorMessage"] = $"Cannot delete '{pub.PublisherName}' because it is linked to {pub.AssociateBookPublishers.Count} book title(s).";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        _context.Publishers.Remove(pub);
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = $"Publisher '{pub.PublisherName}' deleted successfully.";
+        return RedirectToAction(nameof(Metadata));
+    }
+
+    // POST: /Admin/AddCategory
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddCategory(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Category name cannot be empty.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        string trimmedName = name.Trim();
+        if (trimmedName.Length > 30)
+        {
+            TempData["ErrorMessage"] = "Category name cannot exceed 30 characters.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        bool exists = await _context.Categories.AnyAsync(c => c.CategoryName.ToLower() == trimmedName.ToLower());
+        if (exists)
+        {
+            TempData["ErrorMessage"] = $"Category '{trimmedName}' already exists.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        _context.Categories.Add(new Category { CategoryName = trimmedName });
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = $"Category '{trimmedName}' added successfully.";
+        return RedirectToAction(nameof(Metadata));
+    }
+
+    // POST: /Admin/UpdateCategory
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateCategory(short categoryId, string name)
+    {
+        var cat = await _context.Categories.FindAsync(categoryId);
+        if (cat == null)
+        {
+            TempData["ErrorMessage"] = "Category not found.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Category name cannot be empty.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        string trimmedName = name.Trim();
+        if (trimmedName.Length > 30)
+        {
+            TempData["ErrorMessage"] = "Category name cannot exceed 30 characters.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        bool duplicate = await _context.Categories.AnyAsync(c => c.CategoryId != categoryId && c.CategoryName.ToLower() == trimmedName.ToLower());
+        if (duplicate)
+        {
+            TempData["ErrorMessage"] = $"Another category with the name '{trimmedName}' already exists.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        cat.CategoryName = trimmedName;
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = $"Category '{trimmedName}' updated successfully.";
+        return RedirectToAction(nameof(Metadata));
+    }
+
+    // POST: /Admin/DeleteCategory
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteCategory(short categoryId)
+    {
+        var cat = await _context.Categories.Include(c => c.AssociateBookCategories).FirstOrDefaultAsync(c => c.CategoryId == categoryId);
+        if (cat == null)
+        {
+            TempData["ErrorMessage"] = "Category not found.";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        if (cat.AssociateBookCategories.Any())
+        {
+            TempData["ErrorMessage"] = $"Cannot delete '{cat.CategoryName}' because it is linked to {cat.AssociateBookCategories.Count} book title(s).";
+            return RedirectToAction(nameof(Metadata));
+        }
+
+        _context.Categories.Remove(cat);
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = $"Category '{cat.CategoryName}' deleted successfully.";
+        return RedirectToAction(nameof(Metadata));
     }
 }
