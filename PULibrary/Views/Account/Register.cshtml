@@ -103,22 +103,49 @@
         }
         .jy-brand-wordmark .jy-title {
             font-family: var(--font-heading);
-            font-size: 24px;
+            font-size: 25px;
             color: #fffdf8;
             line-height: 1.25;
             letter-spacing: 0.02em;
         }
         .jy-brand-wordmark .jy-sub {
-            font-size: 10px;
-            font-weight: 600;
+            font-size: 12px;
+            font-weight: 700;
             color: #d4dcc9;
             letter-spacing: 0.14em;
             text-transform: uppercase;
+        }
+        .jy-auth-right .jy-form-control {
+            height: 46px;
+            font-size: 15px;
         }
         .jy-auth-right .jy-form-control::placeholder {
             color: #8c9389 !important;
             opacity: 0.45 !important;
             font-weight: 400 !important;
+            font-size: 14.5px;
+        }
+        .jy-btn-outline {
+            height: 44px;
+            padding: 0 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none !important;
+            border: 1.5px solid var(--jy-primary-green);
+            border-radius: 6px;
+            background-color: #fffdf8;
+            color: var(--jy-primary-green) !important;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+        .jy-btn-outline:hover {
+            background-color: #e8eee8;
+            color: #1b3e30 !important;
+            border-color: #1b3e30;
+            transform: translateY(-1px);
         }
         .jy-role-select {
             display: flex;
@@ -185,7 +212,7 @@
 
                 <!-- Welcome Editorial -->
                 <div>
-                    <div style="font-size: 11px; font-weight: 600; color: #d4dcc9; letter-spacing: 0.08em;">JOIN THE COMMUNITY</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #d4dcc9; letter-spacing: 0.1em;">JOIN THE COMMUNITY</div>
                     <div class="jy-editorial-title">
                         Read broadly.<br />
                         Discover deeply.<br />
@@ -197,7 +224,7 @@
                     </p>
                 </div>
 
-                <div style="font-size: 11px; color: #d4dcc9; letter-spacing: 0.05em;">
+                <div style="font-size: 13px; color: #d4dcc9; letter-spacing: 0.06em; font-weight: 500;">
                     JINGYI PUBLIC LIBRARY &nbsp; / &nbsp; READER REGISTRATION
                 </div>
             </div>
@@ -208,23 +235,23 @@
             <div class="jy-auth-right-inner">
                 <!-- Header badge -->
                 <div class="d-flex align-items-center gap-2" style="color: var(--jy-primary-green);">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
-                    <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em;">READER CARD MEMBERSHIP &amp; ACCESS</span>
+                    <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 0.06em;">READER CARD MEMBERSHIP &amp; ACCESS</span>
                 </div>
 
                 <!-- Form block -->
                 <div class="jy-auth-form-card">
                     <h1 style="font-family: var(--font-heading); font-size: 38px; color: var(--jy-primary-dark); margin-bottom: 8px;">Join JingYi Library</h1>
-                    <p style="font-size: 15px; color: var(--jy-text-muted); margin-bottom: 20px;">Create your reader card to begin borrowing books.</p>
+                    <p style="font-size: 16px; color: var(--jy-text-muted); margin-bottom: 20px;">Create your reader card to begin borrowing books.</p>
 
                     @if (!ViewData.ModelState.IsValid)
                     {
                         <div style="background-color: var(--jy-badge-red-bg); border-left: 3px solid var(--jy-badge-red-text); border-radius: 6px; padding: 14px 16px; margin-bottom: 18px; color: var(--jy-badge-red-text);">
-                            <div style="font-weight: 600; font-size: 14px;">Registration could not be completed.</div>
-                            <div style="font-size: 13px;">
+                            <div style="font-weight: 600; font-size: 14.5px;">Registration could not be completed.</div>
+                            <div style="font-size: 13.5px;">
                                 @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
                                 {
                                     <div>@err.ErrorMessage</div>
@@ -236,41 +263,41 @@
                     <form asp-action="Register" method="post" class="d-flex flex-column gap-3">
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
-                                <label class="jy-form-label" style="font-size: 13px;">Full name <span class="text-danger">*</span></label>
-                                <input type="text" name="name" required maxlength="30" class="form-control jy-form-control" style="height: 42px;" placeholder="Enter full name" />
+                                <label class="jy-form-label" style="font-size: 14.5px; font-weight: 600; margin-bottom: 6px;">Full name <span class="text-danger">*</span></label>
+                                <input type="text" name="name" required maxlength="30" class="form-control jy-form-control" style="height: 46px; font-size: 15px;" placeholder="Enter full name" />
                             </div>
                             <div class="col-12 col-md-6">
-                                <label class="jy-form-label" style="font-size: 13px;">Username <span class="text-danger">*</span></label>
-                                <input type="text" name="username" required maxlength="20" class="form-control jy-form-control" style="height: 42px;" placeholder="Enter username" />
+                                <label class="jy-form-label" style="font-size: 14.5px; font-weight: 600; margin-bottom: 6px;">Username <span class="text-danger">*</span></label>
+                                <input type="text" name="username" required maxlength="20" class="form-control jy-form-control" style="height: 46px; font-size: 15px;" placeholder="Enter username" />
                             </div>
                         </div>
 
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
-                                <label class="jy-form-label" style="font-size: 13px;">Email address</label>
-                                <input type="email" name="email" maxlength="100" class="form-control jy-form-control" style="height: 42px;" placeholder="Enter email address" />
+                                <label class="jy-form-label" style="font-size: 14.5px; font-weight: 600; margin-bottom: 6px;">Email address</label>
+                                <input type="email" name="email" maxlength="100" class="form-control jy-form-control" style="height: 46px; font-size: 15px;" placeholder="Enter email address" />
                             </div>
                             <div class="col-12 col-md-6">
-                                <label class="jy-form-label" style="font-size: 13px;">Phone number</label>
-                                <input type="tel" name="phone" maxlength="10" class="form-control jy-form-control" style="height: 42px;" placeholder="10-digit number" />
+                                <label class="jy-form-label" style="font-size: 14.5px; font-weight: 600; margin-bottom: 6px;">Phone number</label>
+                                <input type="tel" name="phone" maxlength="10" class="form-control jy-form-control" style="height: 46px; font-size: 15px;" placeholder="10-digit number" />
                             </div>
                         </div>
 
                         <div>
-                            <label class="jy-form-label" style="font-size: 13px;">Reader account type</label>
+                            <label class="jy-form-label" style="font-size: 14.5px; font-weight: 600; margin-bottom: 6px;">Reader account type</label>
                             <div class="jy-role-select">
                                 <label class="jy-role-option">
                                     <input type="radio" name="roleId" value="1" checked />
                                     <div>
-                                        <div style="font-size: 13px; font-weight: 600; color: var(--jy-primary-dark);">Member</div>
-                                        <div style="font-size: 11px; color: var(--jy-text-muted);">Standard reader borrowing</div>
+                                        <div style="font-size: 14px; font-weight: 600; color: var(--jy-primary-dark);">Member</div>
+                                        <div style="font-size: 13px; color: #525c4e;">Standard reader borrowing</div>
                                     </div>
                                 </label>
                                 <label class="jy-role-option">
                                     <input type="radio" name="roleId" value="2" />
                                     <div>
-                                        <div style="font-size: 13px; font-weight: 600; color: var(--jy-primary-dark);">Researcher</div>
-                                        <div style="font-size: 11px; color: var(--jy-text-muted);">Extended loan privileges</div>
+                                        <div style="font-size: 14px; font-weight: 600; color: var(--jy-primary-dark);">Researcher</div>
+                                        <div style="font-size: 13px; color: #525c4e;">Extended loan privileges</div>
                                     </div>
                                 </label>
                             </div>
@@ -278,26 +305,26 @@
 
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
-                                <label class="jy-form-label" style="font-size: 13px;">Password <span class="text-danger">*</span></label>
-                                <input type="password" name="password" required class="form-control jy-form-control" style="height: 42px;" placeholder="Enter password" />
+                                <label class="jy-form-label" style="font-size: 14.5px; font-weight: 600; margin-bottom: 6px;">Password <span class="text-danger">*</span></label>
+                                <input type="password" name="password" required class="form-control jy-form-control" style="height: 46px; font-size: 15px;" placeholder="Enter password" />
                             </div>
                             <div class="col-12 col-md-6">
-                                <label class="jy-form-label" style="font-size: 13px;">Confirm password <span class="text-danger">*</span></label>
-                                <input type="password" name="confirmPassword" required class="form-control jy-form-control" style="height: 42px;" placeholder="Re-enter password" />
+                                <label class="jy-form-label" style="font-size: 14.5px; font-weight: 600; margin-bottom: 6px;">Confirm password <span class="text-danger">*</span></label>
+                                <input type="password" name="confirmPassword" required class="form-control jy-form-control" style="height: 46px; font-size: 15px;" placeholder="Re-enter password" />
                             </div>
                         </div>
 
                         <div class="d-flex align-items-center justify-content-between mt-3 pt-2">
-                            <a asp-action="SignIn" style="font-size: 13px; color: var(--jy-primary-green); text-decoration: underline; font-weight: 500;">
-                                ← Already a reader? Sign in
+                            <a asp-action="SignIn" class="jy-btn-outline">
+                                ← Back to Sign in
                             </a>
-                            <button type="submit" class="jy-btn-primary" style="height: 44px; padding: 0 28px;">Register reader card →</button>
+                            <button type="submit" class="jy-btn-primary" style="height: 44px; padding: 0 28px; font-size: 14.5px; font-weight: 600;">Register reader card →</button>
                         </div>
                     </form>
                 </div>
 
                 <!-- Footer -->
-                <div style="font-size: 12px; color: var(--jy-text-muted);">
+                <div style="font-size: 13.5px; color: #525c4e;">
                     Authorized readers only. Reader information is private and protected.
                 </div>
             </div>
