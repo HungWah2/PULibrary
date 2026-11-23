@@ -341,6 +341,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form asp-action="UpdateProfile" method="post">
+                <input type="hidden" name="userId" value="@Model.UserId" />
                 <div class="modal-body d-flex flex-column gap-3" style="padding: 24px;">
                     <div>
                         <label class="jy-form-label" style="font-size: 13px;">Full name *</label>

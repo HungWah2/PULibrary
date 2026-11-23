@@ -60,7 +60,7 @@ public class CatalogController : Controller
             return NotFound();
         }
 
-        int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 2481; // Default to Maya Chen if anonymous
+        int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 1001; // Default to Jamie Lee if anonymous
         ViewBag.CurrentUserId = currentUserId;
 
         return View(book);
@@ -70,7 +70,7 @@ public class CatalogController : Controller
     [HttpPost]
     public async Task<IActionResult> Reserve(int bookId)
     {
-        int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 2481; // Maya Chen by default
+        int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 1001;
 
         var user = await _context.Users.FindAsync(currentUserId);
         if (user == null || user.Status != "Active")

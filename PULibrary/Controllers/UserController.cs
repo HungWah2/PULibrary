@@ -19,10 +19,10 @@ public class UserController : Controller
         return await Profile(null);
     }
 
-    // GET: /User/Profile or /User/Profile/2481 (Figma node 1:972)
+    // GET: /User/Profile or /User/Profile/1001
     public async Task<IActionResult> Profile(int? id)
     {
-        int targetUserId = id ?? HttpContext.Session.GetInt32("UserId") ?? 2481;
+        int targetUserId = id ?? HttpContext.Session.GetInt32("UserId") ?? 1001;
 
         var user = await _context.Users
             .Include(u => u.Role).ThenInclude(r => r!.Policy)
@@ -78,7 +78,7 @@ public class UserController : Controller
     [HttpPost]
     public async Task<IActionResult> CancelReservation(int reservationId)
     {
-        int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 2481;
+        int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 1001;
         var res = await _context.Reservations
             .Include(r => r.FulfilledCopy)
             .FirstOrDefaultAsync(r => r.ReservationId == reservationId && r.UserId == currentUserId);
@@ -99,20 +99,20 @@ public class UserController : Controller
 
     // POST: /User/UpdateProfile
     [HttpPost]
-    public async Task<IActionResult> UpdateProfile(string name, string? username, string email, string phone, string? newPassword)
+    public async Task<IActionResult> UpdateProfile(int? userId, string name, string? username, string email, string phone, string? newPassword)
     {
-        int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 2481;
-        var user = await _context.Users.FindAsync(currentUserId);
+        int targetUserId = userId ?? HttpContext.Session.GetInt32("UserId") ?? 1001;
+        var user = await _context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.UserId == targetUserId);
         if (user == null)
         {
             TempData["ErrorMessage"] = "User account not found.";
-            return RedirectToAction(nameof(Profile));
+            return RedirectToAction(nameof(Profile), new { id = targetUserId });
         }
 
         if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email))
         {
             TempData["ErrorMessage"] = "Name and Email are required fields.";
-            return RedirectToAction(nameof(Profile), new { id = currentUserId });
+            return RedirectToAction(nameof(Profile), new { id = targetUserId });
         }
 
         // Validate and update username if provided
@@ -121,11 +121,11 @@ public class UserController : Controller
             var cleanUsername = username.Trim().ToLower();
             if (cleanUsername.Length > 20) cleanUsername = cleanUsername.Substring(0, 20);
 
-            var isTaken = await _context.Users.AnyAsync(u => u.UserId != currentUserId && u.Username.ToLower() == cleanUsername);
+            var isTaken = await _context.Users.AnyAsync(u => u.UserId != targetUserId && u.Username.ToLower() == cleanUsername);
             if (isTaken)
             {
                 TempData["ErrorMessage"] = $"The username '{cleanUsername}' is already taken by another account. Please choose a different username.";
-                return RedirectToAction(nameof(Profile), new { id = currentUserId });
+                return RedirectToAction(nameof(Profile), new { id = targetUserId });
             }
 
             user.Username = cleanUsername;
@@ -149,10 +149,17 @@ public class UserController : Controller
         user.UpdatedAt = DateTime.Now;
         await _context.SaveChangesAsync();
 
-        // Update session identity so the UI updates immediately
-        HttpContext.Session.SetString("UserName", user.Name);
+        // Update session identity so the UI updates immediately if this is the active user
+        int? sessionUserId = HttpContext.Session.GetInt32("UserId");
+        if (sessionUserId == null || sessionUserId == user.UserId)
+        {
+            HttpContext.Session.SetInt32("UserId", user.UserId);
+            HttpContext.Session.SetString("UserName", user.Name);
+            HttpContext.Session.SetString("UserRole", user.Role?.RoleName ?? "Member");
+            HttpContext.Session.SetInt32("RoleId", user.RoleId);
+        }
 
         TempData["SuccessMessage"] = "Your account profile and login username have been customized successfully!";
-        return RedirectToAction(nameof(Profile), new { id = currentUserId });
+        return RedirectToAction(nameof(Profile), new { id = user.UserId });
     }
 }
