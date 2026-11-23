@@ -2,7 +2,9 @@
     --jy-canvas-bg: #f5f3ed;
     --jy-sidebar-bg: #edeee6;
     --jy-card-bg: #fffdf8;
+    --jy-panel-bg: #fffdf8;
     --jy-border: #dcddd3;
+    --jy-shadow: 0 16px 40px rgba(27, 62, 48, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
     --jy-table-header-bg: #ecece5;
     --jy-primary-green: #275b46;
     --jy-primary-green-hover: #1f4837;
@@ -680,4 +682,24 @@ body.jy-app-body {
     font-weight: 600;
     color: var(--jy-text-muted);
     margin-bottom: 4px;
+}
+
+/* Modal Dialogs */
+.modal-content {
+    background-color: var(--jy-card-bg) !important;
+    border: 1px solid var(--jy-border) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.22) !important;
+}
+
+.modal-header {
+    background-color: var(--jy-card-bg);
+}
+
+.modal-body {
+    background-color: var(--jy-card-bg);
+}
+
+.modal-backdrop.show {
+    opacity: 0.55 !important;
 }
