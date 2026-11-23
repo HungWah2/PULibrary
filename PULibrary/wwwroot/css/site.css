@@ -74,6 +74,7 @@ body.jy-app-body {
 .jy-brand-text {
     display: flex;
     flex-direction: column;
+    gap: 4px;
 }
 
 .jy-brand-title {
@@ -81,7 +82,7 @@ body.jy-app-body {
     font-size: 22px;
     font-weight: 500;
     color: var(--jy-primary-dark);
-    line-height: 1.1;
+    line-height: 1.2;
 }
 
 .jy-brand-subtitle {
@@ -89,7 +90,7 @@ body.jy-app-body {
     font-size: 10px;
     font-weight: 600;
     color: var(--jy-text-muted);
-    letter-spacing: 0.08em;
+    letter-spacing: 0.12em;
 }
 
 /* Navigation items */
