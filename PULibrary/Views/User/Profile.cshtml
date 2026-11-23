@@ -98,12 +98,12 @@
                 <div class="jy-panel-header mb-3">
                     <div>
                         <div class="jy-panel-heading-title">Assigned role</div>
-                        <div class="jy-panel-heading-desc">User @Model.UserId → Role @Model.RoleId</div>
+                        <div class="jy-panel-heading-desc">User @Model.UserId · @(Model.Role?.RoleName ?? "Reader")</div>
                     </div>
                 </div>
 
                 <div style="font-weight: 600; font-size: 16px; color: var(--jy-primary-dark); margin-bottom: 4px;">
-                    @Model.Role?.RoleName · Role @Model.RoleId
+                    @(Model.Role?.RoleName ?? "Reader")
                 </div>
                 <div style="font-size: 13px; color: var(--jy-text-muted); line-height: 1.4;">
                     Policy @Model.Role?.Policy?.PolicyId · @Model.Role?.Policy?.LoanDays days loan duration · @Model.Role?.Policy?.MaxLoans concurrent loans · @Model.Role?.Policy?.MaxRenewals renewals allowed

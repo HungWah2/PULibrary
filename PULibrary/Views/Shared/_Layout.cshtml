@@ -20,7 +20,9 @@
         string currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "Admin";
 
         string userName = Context.Session.GetString("UserName") ?? "Jamie Lee";
-        string userRole = Context.Session.GetString("UserRole") ?? "Admin · Role 4";
+        string rawUserRole = Context.Session.GetString("UserRole") ?? "Admin";
+        string userRole = System.Text.RegularExpressions.Regex.Replace(rawUserRole, @"\s*·\s*Role\s*\d+", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
+        if (userRole.StartsWith("Role ", StringComparison.OrdinalIgnoreCase)) userRole = "Member";
         int userId = Context.Session.GetInt32("UserId") ?? 1001;
         string initials = string.Join("", userName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => s[0])).ToUpper();
         if (string.IsNullOrEmpty(initials)) initials = "JL";
@@ -168,10 +170,8 @@
                 <div class="jy-account-info">
                     <div class="jy-account-name">@userName</div>
                     <div class="jy-account-role">@userRole</div>
-                    <div class="jy-account-meta d-flex gap-2">
+                    <div class="jy-account-meta">
                         <a asp-controller="User" asp-action="Profile" asp-route-id="@userId" style="color: inherit; text-decoration: underline;">Profile &amp; Settings</a>
-                        <span>·</span>
-                        <a asp-controller="Account" asp-action="SignIn" style="color: inherit; text-decoration: underline;">Switch user</a>
                     </div>
                 </div>
             </div>
@@ -182,10 +182,6 @@
             <!-- Utility Bar -->
             <header class="jy-utility-bar">
                 <div class="jy-breadcrumb">
-                    <span>JingYi Public Library</span>
-                    <span class="jy-breadcrumb-separator">/</span>
-                    <span>@(currentController == "Admin" ? "Librarian workspace" : "Reader portal")</span>
-                    <span class="jy-breadcrumb-separator">/</span>
                     <span class="jy-breadcrumb-current">@(ViewData["Title"] ?? "Dashboard")</span>
                 </div>
                 <div class="jy-session-details">
