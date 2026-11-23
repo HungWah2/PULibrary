@@ -577,9 +577,14 @@ public class AdminController : Controller
                 if (digits.Length > 10) digits = digits.Substring(0, 10);
                 user.Phone = digits.PadRight(10, '0');
             }
-            user.Status = status;
+            // Database constraint status_enum allows only 'Active' or 'Suspend'
+            user.Status = string.Equals(status, "Active", StringComparison.OrdinalIgnoreCase) ? "Active" : "Suspend";
             user.RoleId = roleId;
-            user.UpdatedAt = DateTime.Now;
+
+            // Ensure updated_at > created_at for updated_after check constraint
+            var now = DateTime.Now;
+            user.UpdatedAt = now > user.CreatedAt ? now : user.CreatedAt.AddSeconds(1);
+
             await _context.SaveChangesAsync();
             TempData["SuccessMessage"] = $"User #{userId} ({user.Name}) account customized successfully!";
         }

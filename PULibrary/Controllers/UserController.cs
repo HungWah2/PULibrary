@@ -146,7 +146,9 @@ public class UserController : Controller
             user.PasswordHash = newPassword.Trim();
         }
 
-        user.UpdatedAt = DateTime.Now;
+        // Ensure updated_at > created_at for updated_after check constraint
+        var now = DateTime.Now;
+        user.UpdatedAt = now > user.CreatedAt ? now : user.CreatedAt.AddSeconds(1);
         await _context.SaveChangesAsync();
 
         // Update session identity so the UI updates immediately if this is the active user
