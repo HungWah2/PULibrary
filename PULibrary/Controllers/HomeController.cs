@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using PULibrary.Models;
 
 namespace PULibrary.Controllers;
 
@@ -14,8 +16,9 @@ public class HomeController : Controller
         return RedirectToAction("Index", "Catalog");
     }
 
-    public IActionResult Privacy()
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
     {
-        return View();
+        return View("~/Views/Shared/Error.cshtml", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }
