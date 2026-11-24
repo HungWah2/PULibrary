@@ -83,3 +83,31 @@
         </div>
     }
 </div>
+
+@if ((ViewBag.TotalPages ?? 1) > 1)
+{
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? Model.Count;
+    int pageSize = ViewBag.PageSize ?? 9;
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mt-4 pt-3" style="border-top: 1px solid var(--jy-border);">
+        <div style="font-size: 13.5px; color: var(--jy-text-muted);">
+            Showing <strong>@((currentPage - 1) * pageSize + 1)–@(Math.Min(currentPage * pageSize, totalCount))</strong> of <strong>@totalCount</strong> catalog titles
+        </div>
+        <div class="d-flex gap-1 align-items-center">
+            @if (currentPage > 1)
+            {
+                <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@searchQuery" asp-route-category="@selectedCat" class="jy-btn-secondary" style="height: 36px; padding: 0 14px; font-size: 13px;">← Previous</a>
+            }
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <a asp-action="Index" asp-route-page="@i" asp-route-search="@searchQuery" asp-route-category="@selectedCat" class="@(i == currentPage ? "jy-btn-primary" : "jy-btn-secondary")" style="height: 36px; min-width: 36px; padding: 0 10px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center;">@i</a>
+            }
+            @if (currentPage < totalPages)
+            {
+                <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@searchQuery" asp-route-category="@selectedCat" class="jy-btn-secondary" style="height: 36px; padding: 0 14px; font-size: 13px;">Next →</a>
+            }
+        </div>
+    </div>
+}

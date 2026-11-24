@@ -154,7 +154,7 @@ public class AdminController : Controller
     }
 
     // GET: /Admin/Books
-    public async Task<IActionResult> Books(string? search, string? category, string? language, string? availability)
+    public async Task<IActionResult> Books(string? search, string? category, string? language, string? availability, int page = 1, int pageSize = 10)
     {
         var query = _context.Books
             .Include(b => b.AssociateBookAuthors).ThenInclude(aba => aba.Author)
@@ -182,10 +182,21 @@ public class AdminController : Controller
             query = query.Where(b => b.AssociateBookCategories.Any(c => c.Category!.CategoryName == category));
         }
 
-        var books = await query.ToListAsync();
+        if (availability == "Available")
+        {
+            query = query.Where(b => b.Copies.Any(c => c.Status == "Available"));
+        }
 
-        var allCats = await _context.Categories.Select(c => c.CategoryName).Distinct().ToListAsync();
-        var allLangs = await _context.Books.Select(b => b.Language).Distinct().ToListAsync();
+        query = query.OrderBy(b => b.Title);
+
+        int totalCount = await query.CountAsync();
+        int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
+
+        var books = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+        var allCats = await _context.Categories.Select(c => c.CategoryName).Distinct().OrderBy(c => c).ToListAsync();
+        var allLangs = await _context.Books.Select(b => b.Language).Distinct().OrderBy(l => l).ToListAsync();
         var totalPhysicalCopies = await _context.BookCopies.CountAsync();
 
         var bookItems = books.Select(b => new BookCatalogItemViewModel
@@ -203,11 +214,6 @@ public class AdminController : Controller
             AvailableCopies = b.Copies.Count(c => c.Status == "Available")
         }).ToList();
 
-        if (availability == "Available")
-        {
-            bookItems = bookItems.Where(b => b.AvailableCopies > 0).ToList();
-        }
-
         var vm = new BookCatalogViewModel
         {
             SearchQuery = search,
@@ -217,8 +223,11 @@ public class AdminController : Controller
             Books = bookItems,
             AllCategories = allCats,
             AllLanguages = allLangs,
-            TotalBooksCount = books.Count,
-            TotalPhysicalCopiesCount = totalPhysicalCopies
+            TotalBooksCount = totalCount,
+            TotalPhysicalCopiesCount = totalPhysicalCopies,
+            CurrentPage = page,
+            TotalPages = totalPages,
+            PageSize = pageSize
         };
 
         return View(vm);
@@ -226,15 +235,16 @@ public class AdminController : Controller
 
     // POST: /Admin/AddBook
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddBook(string title, string isbn, string language, short edition, string? description, string authorName, string publisherName, string categoryName)
     {
         var book = new Book
         {
-            Title = title,
+            Title = title.Trim(),
             Isbn = string.IsNullOrWhiteSpace(isbn) ? null : isbn.Trim(),
-            Language = string.IsNullOrWhiteSpace(language) ? "English" : language,
+            Language = string.IsNullOrWhiteSpace(language) ? "English" : language.Trim(),
             Edition = edition > 0 ? edition : (short)1,
-            Description = description,
+            Description = description?.Trim(),
             PublishedDate = DateTime.Now
         };
 
@@ -277,11 +287,11 @@ public class AdminController : Controller
             _context.AssociateBookCategories.Add(new AssociateBookCategory { BookId = book.BookId, CategoryId = cat.CategoryId });
         }
 
-        // Add 1 default copy
+        // Add 1 default copy with unique shelf location
         var copy = new BookCopy
         {
             BookId = book.BookId,
-            ShelfLocation = $"STACK-{book.BookId:D3}-01",
+            ShelfLocation = $"SH-{book.BookId:D4}-01",
             CopyCondition = "Good",
             Status = "Available"
         };
@@ -292,19 +302,228 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Books));
     }
 
-    // GET: /Admin/Copies
-    public async Task<IActionResult> Copies()
+    // POST: /Admin/UpdateBook
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateBook(int bookId, string title, string? isbn, string language, short edition, string? description, string authorName, string publisherName, string categoryName)
     {
-        var copies = await _context.BookCopies
+        var book = await _context.Books
+            .Include(b => b.AssociateBookAuthors)
+            .Include(b => b.AssociateBookPublishers)
+            .Include(b => b.AssociateBookCategories)
+            .FirstOrDefaultAsync(b => b.BookId == bookId);
+
+        if (book == null)
+        {
+            TempData["ErrorMessage"] = "Book not found.";
+            return RedirectToAction(nameof(Books));
+        }
+
+        book.Title = title.Trim();
+        book.Isbn = string.IsNullOrWhiteSpace(isbn) ? null : isbn.Trim();
+        book.Language = string.IsNullOrWhiteSpace(language) ? "English" : language.Trim();
+        book.Edition = edition > 0 ? edition : (short)1;
+        book.Description = description?.Trim();
+
+        // Update Author
+        if (!string.IsNullOrWhiteSpace(authorName))
+        {
+            var author = await _context.Authors.FirstOrDefaultAsync(a => a.AuthorName.ToLower() == authorName.Trim().ToLower())
+                         ?? new Author { AuthorName = authorName.Trim() };
+            if (author.AuthorId == 0)
+            {
+                _context.Authors.Add(author);
+                await _context.SaveChangesAsync();
+            }
+            _context.AssociateBookAuthors.RemoveRange(book.AssociateBookAuthors);
+            book.AssociateBookAuthors.Add(new AssociateBookAuthor { BookId = book.BookId, AuthorId = author.AuthorId });
+        }
+
+        // Update Publisher
+        if (!string.IsNullOrWhiteSpace(publisherName))
+        {
+            var pub = await _context.Publishers.FirstOrDefaultAsync(p => p.PublisherName.ToLower() == publisherName.Trim().ToLower())
+                      ?? new Publisher { PublisherName = publisherName.Trim() };
+            if (pub.PublisherId == 0)
+            {
+                _context.Publishers.Add(pub);
+                await _context.SaveChangesAsync();
+            }
+            _context.AssociateBookPublishers.RemoveRange(book.AssociateBookPublishers);
+            book.AssociateBookPublishers.Add(new AssociateBookPublisher { BookId = book.BookId, PublisherId = pub.PublisherId });
+        }
+
+        // Update Category
+        if (!string.IsNullOrWhiteSpace(categoryName))
+        {
+            var cat = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryName.ToLower() == categoryName.Trim().ToLower())
+                      ?? new Category { CategoryName = categoryName.Trim() };
+            if (cat.CategoryId == 0)
+            {
+                _context.Categories.Add(cat);
+                await _context.SaveChangesAsync();
+            }
+            _context.AssociateBookCategories.RemoveRange(book.AssociateBookCategories);
+            book.AssociateBookCategories.Add(new AssociateBookCategory { BookId = book.BookId, CategoryId = cat.CategoryId });
+        }
+
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = $"Book #{book.BookId} '{book.Title}' updated successfully!";
+        return RedirectToAction(nameof(Books));
+    }
+
+    // POST: /Admin/DeleteBook
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteBook(int bookId)
+    {
+        var book = await _context.Books
+            .Include(b => b.Copies).ThenInclude(c => c.Loans)
+            .Include(b => b.Reservations)
+            .Include(b => b.AssociateBookAuthors)
+            .Include(b => b.AssociateBookPublishers)
+            .Include(b => b.AssociateBookCategories)
+            .FirstOrDefaultAsync(b => b.BookId == bookId);
+
+        if (book == null)
+        {
+            TempData["ErrorMessage"] = "Book not found.";
+            return RedirectToAction(nameof(Books));
+        }
+
+        if (book.Copies.Any(c => c.Status == "Borrowed" || c.Loans.Any(l => l.ReturnedAt == null)))
+        {
+            TempData["ErrorMessage"] = $"Cannot delete book '{book.Title}' because copies are currently borrowed or on active loan.";
+            return RedirectToAction(nameof(Books));
+        }
+
+        foreach (var copy in book.Copies)
+        {
+            _context.Loans.RemoveRange(copy.Loans);
+        }
+        _context.BookCopies.RemoveRange(book.Copies);
+        _context.Reservations.RemoveRange(book.Reservations);
+        _context.AssociateBookAuthors.RemoveRange(book.AssociateBookAuthors);
+        _context.AssociateBookPublishers.RemoveRange(book.AssociateBookPublishers);
+        _context.AssociateBookCategories.RemoveRange(book.AssociateBookCategories);
+
+        _context.Books.Remove(book);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"Book '{book.Title}' deleted from collection.";
+        return RedirectToAction(nameof(Books));
+    }
+
+    // GET: /Admin/Copies
+    public async Task<IActionResult> Copies(string? status, string? condition, string? search, int page = 1, int pageSize = 15)
+    {
+        var query = _context.BookCopies
             .Include(c => c.Book)
-            .OrderBy(c => c.BookId)
-            .ThenBy(c => c.CopyId)
-            .ToListAsync();
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(c => c.Book!.Title.ToLower().Contains(term) ||
+                                     c.ShelfLocation.ToLower().Contains(term) ||
+                                     c.CopyId.ToString().Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(status) && status != "All")
+        {
+            query = query.Where(c => c.Status == status);
+        }
+
+        if (!string.IsNullOrWhiteSpace(condition) && condition != "All")
+        {
+            query = query.Where(c => c.CopyCondition == condition);
+        }
+
+        query = query.OrderBy(c => c.BookId).ThenBy(c => c.CopyId);
+
+        int totalCount = await query.CountAsync();
+        int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
+
+        var copies = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+        ViewBag.Search = search;
+        ViewBag.Status = status;
+        ViewBag.Condition = condition;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalCount = totalCount;
+        ViewBag.PageSize = pageSize;
+        ViewBag.Books = await _context.Books.OrderBy(b => b.Title).ToListAsync();
+
         return View(copies);
+    }
+
+    // POST: /Admin/AddCopy
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddCopy(int bookId, string shelfLocation, string copyCondition)
+    {
+        if (string.IsNullOrWhiteSpace(shelfLocation))
+        {
+            TempData["ErrorMessage"] = "Shelf location cannot be empty.";
+            return RedirectToAction(nameof(Copies));
+        }
+
+        string cleanShelf = shelfLocation.Trim();
+        bool shelfExists = await _context.BookCopies.AnyAsync(c => c.ShelfLocation.ToLower() == cleanShelf.ToLower());
+        if (shelfExists)
+        {
+            TempData["ErrorMessage"] = $"Shelf location '{cleanShelf}' is already assigned to another physical copy. Each shelf location must be unique.";
+            return RedirectToAction(nameof(Copies));
+        }
+
+        var copy = new BookCopy
+        {
+            BookId = bookId,
+            ShelfLocation = cleanShelf,
+            CopyCondition = string.IsNullOrWhiteSpace(copyCondition) ? "Good" : copyCondition,
+            Status = "Available"
+        };
+
+        _context.BookCopies.Add(copy);
+        await _context.SaveChangesAsync();
+        TempData["SuccessMessage"] = $"Physical copy #{copy.CopyId} added at shelf location '{copy.ShelfLocation}'!";
+        return RedirectToAction(nameof(Copies));
+    }
+
+    // POST: /Admin/DeleteCopy
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteCopy(int copyId)
+    {
+        var copy = await _context.BookCopies
+            .Include(c => c.Loans)
+            .FirstOrDefaultAsync(c => c.CopyId == copyId);
+
+        if (copy == null)
+        {
+            TempData["ErrorMessage"] = "Copy not found.";
+            return RedirectToAction(nameof(Copies));
+        }
+
+        if (copy.Status == "Borrowed" || copy.Loans.Any(l => l.ReturnedAt == null))
+        {
+            TempData["ErrorMessage"] = $"Cannot delete physical copy #{copyId} because it is currently borrowed.";
+            return RedirectToAction(nameof(Copies));
+        }
+
+        _context.Loans.RemoveRange(copy.Loans);
+        _context.BookCopies.Remove(copy);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"Physical copy #{copyId} removed from inventory.";
+        return RedirectToAction(nameof(Copies));
     }
 
     // POST: /Admin/UpdateCopyCondition
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateCopyCondition(int copyId, string condition, string status)
     {
         var copy = await _context.BookCopies.FindAsync(copyId);
@@ -313,13 +532,13 @@ public class AdminController : Controller
             copy.CopyCondition = condition;
             copy.Status = status;
             await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = $"Copy {copyId} updated!";
+            TempData["SuccessMessage"] = $"Copy #{copyId} updated!";
         }
         return RedirectToAction(nameof(Copies));
     }
 
     // GET: /Admin/Loans
-    public async Task<IActionResult> Loans(string? filter)
+    public async Task<IActionResult> Loans(string? filter, int page = 1, int pageSize = 10)
     {
         var query = _context.Loans
             .Include(l => l.User)
@@ -341,8 +560,20 @@ public class AdminController : Controller
             query = query.Where(l => l.ReturnedAt != null);
         }
 
-        var loans = await query.OrderByDescending(l => l.BorrowedAt).ToListAsync();
+        query = query.OrderByDescending(l => l.BorrowedAt);
+
+        int totalCount = await query.CountAsync();
+        int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
+
+        var loans = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
         ViewBag.CurrentFilter = filter ?? "all";
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalCount = totalCount;
+        ViewBag.PageSize = pageSize;
+
         return View(loans);
     }
 
@@ -352,11 +583,13 @@ public class AdminController : Controller
         var users = await _context.Users
             .Include(u => u.Role).ThenInclude(r => r!.Policy)
             .Where(u => u.Status == "Active")
+            .OrderBy(u => u.Name)
             .ToListAsync();
 
         var availableCopies = await _context.BookCopies
             .Include(c => c.Book)
             .Where(c => c.Status == "Available")
+            .OrderBy(c => c.Book!.Title)
             .ToListAsync();
 
         var activeLoans = await _context.Loans
@@ -366,14 +599,62 @@ public class AdminController : Controller
             .OrderBy(l => l.DueAt)
             .ToListAsync();
 
+        var fulfilledReservations = await _context.Reservations
+            .Include(r => r.User)
+            .Include(r => r.Book)
+            .Include(r => r.FulfilledCopy)
+            .Where(r => r.Status == "FULFILLED")
+            .OrderBy(r => r.ReservedAt)
+            .ToListAsync();
+
         var vm = new CirculationDeskViewModel
         {
             ActiveUsers = users,
             AvailableCopies = availableCopies,
-            ActiveLoans = activeLoans
+            ActiveLoans = activeLoans,
+            FulfilledReservations = fulfilledReservations
         };
 
         return View(vm);
+    }
+
+    // POST: /Admin/CheckOutReservation
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CheckOutReservation(int reservationId)
+    {
+        var res = await _context.Reservations
+            .Include(r => r.User).ThenInclude(u => u!.Role).ThenInclude(ro => ro!.Policy)
+            .Include(r => r.FulfilledCopy)
+            .FirstOrDefaultAsync(r => r.ReservationId == reservationId);
+
+        if (res == null || res.Status != "FULFILLED" || res.FulfilledCopy == null || res.User == null)
+        {
+            TempData["ErrorMessage"] = "Fulfilled reservation not found or invalid.";
+            return RedirectToAction(nameof(Circulation));
+        }
+
+        var policy = res.User.Role?.Policy;
+        int loanDays = policy?.LoanDays ?? 14;
+
+        var loan = new Loan
+        {
+            UserId = res.UserId,
+            CopyId = res.FulfilledCopyId!.Value,
+            BorrowedAt = DateTime.Now,
+            DueAt = DateTime.Now.AddDays(loanDays),
+            RenewalCount = 0,
+            ProcessedBy = HttpContext.Session.GetInt32("UserId") ?? 1001
+        };
+
+        res.FulfilledCopy.Status = "Borrowed";
+        res.Status = "COMPLETED";
+
+        _context.Loans.Add(loan);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"Reserved copy #{loan.CopyId} checked out to {res.User.Name}! Due date: {loan.DueAt:dd MMM yyyy}.";
+        return RedirectToAction(nameof(Circulation));
     }
 
     // POST: /Admin/IssueBook

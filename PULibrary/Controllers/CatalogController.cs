@@ -15,7 +15,7 @@ public class CatalogController : Controller
     }
 
     // GET: /Catalog or /Catalog/Index
-    public async Task<IActionResult> Index(string? search, string? category)
+    public async Task<IActionResult> Index(string? search, string? category, int page = 1, int pageSize = 9)
     {
         var query = _context.Books
             .Include(b => b.AssociateBookAuthors).ThenInclude(aba => aba.Author)
@@ -37,10 +37,21 @@ public class CatalogController : Controller
             query = query.Where(b => b.AssociateBookCategories.Any(c => c.Category!.CategoryName == category));
         }
 
-        var books = await query.ToListAsync();
+        query = query.OrderBy(b => b.Title);
+
+        int totalCount = await query.CountAsync();
+        int totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        page = Math.Max(1, Math.Min(page, totalPages > 0 ? totalPages : 1));
+
+        var books = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
         ViewBag.Search = search;
         ViewBag.Category = category;
-        ViewBag.AllCategories = await _context.Categories.Select(c => c.CategoryName).Distinct().ToListAsync();
+        ViewBag.AllCategories = await _context.Categories.Select(c => c.CategoryName).Distinct().OrderBy(c => c).ToListAsync();
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalCount = totalCount;
+        ViewBag.PageSize = pageSize;
 
         return View(books);
     }

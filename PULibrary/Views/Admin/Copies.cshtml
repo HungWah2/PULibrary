@@ -1,22 +1,77 @@
 @model List<PULibrary.Models.BookCopy>
 @{
     ViewData["Title"] = "Copies";
+    var allBooks = ViewBag.Books as List<PULibrary.Models.Book> ?? new();
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? Model.Count;
+    int pageSize = ViewBag.PageSize ?? 15;
+    string search = ViewBag.Search as string ?? "";
+    string selectedStatus = ViewBag.Status as string ?? "";
+    string selectedCond = ViewBag.Condition as string ?? "";
 }
 
 <div class="jy-page-heading">
     <div class="jy-section-label">INVENTORY / PHYSICAL ITEMS</div>
     <div class="jy-title-row">
         <h1 class="jy-page-title">Physical copies register.</h1>
-        <a asp-action="Books" class="jy-btn-primary">+ Manage books</a>
+        <div class="d-flex gap-2">
+            <button type="button" class="jy-btn-primary" data-bs-toggle="modal" data-bs-target="#addCopyModal">
+                + Add physical copy
+            </button>
+            <a asp-action="Books" class="jy-btn-secondary">Manage books →</a>
+        </div>
     </div>
     <div class="jy-page-subtitle">Inspect shelf locations, physical condition and circulation availability of every physical item.</div>
 </div>
 
+<!-- Filter & Search Bar -->
+<div class="jy-panel" style="padding: 16px 20px;">
+    <form method="get" asp-action="Copies" class="d-flex gap-3 align-items-center flex-wrap">
+        <div class="input-group" style="flex: 1; min-width: 240px;">
+            <span class="input-group-text" style="background-color:#fffdf8; border-color:var(--jy-border);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6c746b" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </span>
+            <input type="text" name="search" value="@search" class="form-control jy-form-control" placeholder="Search by book title, copy #, or shelf location..." />
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <span style="font-size: 13px; color: var(--jy-text-muted); font-weight: 600;">Status:</span>
+            <select name="status" onchange="this.form.submit()" class="form-select jy-form-control p-1 px-2" style="font-size: 13px; width: auto;">
+                <option value="All">All Statuses</option>
+                <option value="Available" selected="@(selectedStatus == "Available")">Available</option>
+                <option value="Borrowed" selected="@(selectedStatus == "Borrowed")">Borrowed</option>
+                <option value="Reserved" selected="@(selectedStatus == "Reserved")">Reserved</option>
+            </select>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <span style="font-size: 13px; color: var(--jy-text-muted); font-weight: 600;">Condition:</span>
+            <select name="condition" onchange="this.form.submit()" class="form-select jy-form-control p-1 px-2" style="font-size: 13px; width: auto;">
+                <option value="All">All Conditions</option>
+                <option value="Good" selected="@(selectedCond == "Good")">Good</option>
+                <option value="Fair" selected="@(selectedCond == "Fair")">Fair</option>
+                <option value="Poor" selected="@(selectedCond == "Poor")">Poor</option>
+                <option value="Damaged" selected="@(selectedCond == "Damaged")">Damaged</option>
+            </select>
+        </div>
+
+        <button type="submit" class="jy-btn-primary" style="height: 38px;">Filter</button>
+        @if (!string.IsNullOrEmpty(search) || (!string.IsNullOrEmpty(selectedStatus) && selectedStatus != "All") || (!string.IsNullOrEmpty(selectedCond) && selectedCond != "All"))
+        {
+            <a asp-action="Copies" class="jy-btn-link ms-2" style="font-size: 13px;">Clear</a>
+        }
+    </form>
+</div>
+
 <div class="jy-panel">
-    <div class="jy-panel-header">
+    <div class="jy-panel-header d-flex justify-content-between align-items-center">
         <div>
-            <div class="jy-panel-heading-title">All physical copies</div>
-            <div class="jy-panel-heading-desc">@Model.Count copies in total collection</div>
+            <div class="jy-panel-heading-title">Physical copies collection</div>
+            <div class="jy-panel-heading-desc">@totalCount copies total in inventory</div>
+        </div>
+        <div style="font-size: 13px; color: var(--jy-text-muted);">
+            Page @currentPage of @totalPages
         </div>
     </div>
 
@@ -24,67 +79,137 @@
         <table class="jy-table">
             <thead>
                 <tr>
-                    <th style="width: 15%;">COPY ID</th>
-                    <th style="width: 35%;">BOOK TITLE</th>
-                    <th style="width: 20%;">SHELF LOCATION</th>
-                    <th style="width: 15%;">CONDITION</th>
-                    <th style="width: 15%;">STATUS & ACTIONS</th>
+                    <th style="width: 12%;">COPY ID</th>
+                    <th style="width: 33%;">BOOK TITLE</th>
+                    <th style="width: 18%;">SHELF LOCATION</th>
+                    <th style="width: 25%;">CONDITION & STATUS</th>
+                    <th style="width: 12%; text-align: right;">ACTION</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var copy in Model)
+                @if (Model.Any())
+                {
+                    @foreach (var copy in Model)
+                    {
+                        <tr>
+                            <td style="font-weight: 600; color: var(--jy-primary-dark); font-size: 14px;">
+                                #@copy.CopyId
+                            </td>
+                            <td>
+                                <div style="font-weight: 600; font-size: 14px; color: var(--jy-primary-green);">@copy.Book?.Title</div>
+                                <div style="font-size: 12px; color: var(--jy-text-muted);">Book ID @copy.BookId @(copy.Book?.Isbn != null ? $"· ISBN {copy.Book.Isbn}" : "")</div>
+                            </td>
+                            <td style="font-size: 14px; color: var(--jy-primary-dark); font-family: monospace; font-weight: 600;">
+                                @copy.ShelfLocation
+                            </td>
+                            <td>
+                                <form asp-action="UpdateCopyCondition" method="post" class="d-flex align-items-center gap-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="copyId" value="@copy.CopyId" />
+                                    <select name="condition" class="form-select jy-form-control p-1" style="height: 32px; font-size: 12px; width: 95px;">
+                                        <option value="Good" selected="@(copy.CopyCondition == "Good")">Good</option>
+                                        <option value="Fair" selected="@(copy.CopyCondition == "Fair")">Fair</option>
+                                        <option value="Poor" selected="@(copy.CopyCondition == "Poor")">Poor</option>
+                                        <option value="Damaged" selected="@(copy.CopyCondition == "Damaged")">Damaged</option>
+                                    </select>
+                                    <select name="status" class="form-select jy-form-control p-1" style="height: 32px; font-size: 12px; width: 105px;">
+                                        <option value="Available" selected="@(copy.Status == "Available")">Available</option>
+                                        <option value="Borrowed" selected="@(copy.Status == "Borrowed")">Borrowed</option>
+                                        <option value="Reserved" selected="@(copy.Status == "Reserved")">Reserved</option>
+                                    </select>
+                                    <button type="submit" class="jy-btn-secondary p-1 px-2" style="height: 32px; font-size: 11px;">Save</button>
+                                </form>
+                            </td>
+                            <td style="text-align: right;">
+                                <form asp-action="DeleteCopy" method="post" class="d-inline" onsubmit="return confirm('Remove physical copy #@copy.CopyId from inventory?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="copyId" value="@copy.CopyId" />
+                                    <button type="submit" class="btn btn-sm btn-link p-0 text-danger text-decoration-none" style="font-size: 12px; font-weight: 600;">
+                                        Delete ✕
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
                 {
                     <tr>
-                        <td style="font-weight: 600; color: var(--jy-primary-dark); font-size: 14px;">
-                            #@copy.CopyId
-                        </td>
-                        <td>
-                            <div style="font-weight: 600; font-size: 14px; color: var(--jy-primary-green);">@copy.Book?.Title</div>
-                            <div style="font-size: 12px; color: var(--jy-text-muted);">Book ID @copy.BookId @(copy.Book?.Isbn != null ? $"· ISBN {copy.Book.Isbn}" : "")</div>
-                        </td>
-                        <td style="font-size: 14px; color: var(--jy-primary-dark); font-family: monospace;">
-                            @copy.ShelfLocation
-                        </td>
-                        <td>
-                            <form asp-action="UpdateCopyCondition" method="post" class="d-flex align-items-center gap-2">
-                                <input type="hidden" name="copyId" value="@copy.CopyId" />
-                                <select name="condition" class="form-select jy-form-control p-1" style="height: 32px; font-size: 12px; width: 100px;">
-                                    <option value="Good" selected="@(copy.CopyCondition == "Good")">Good</option>
-                                    <option value="Fair" selected="@(copy.CopyCondition == "Fair")">Fair</option>
-                                    <option value="Poor" selected="@(copy.CopyCondition == "Poor")">Poor</option>
-                                    <option value="Damaged" selected="@(copy.CopyCondition == "Damaged")">Damaged</option>
-                                </select>
-                                <select name="status" class="form-select jy-form-control p-1" style="height: 32px; font-size: 12px; width: 105px;">
-                                    <option value="Available" selected="@(copy.Status == "Available")">Available</option>
-                                    <option value="Borrowed" selected="@(copy.Status == "Borrowed")">Borrowed</option>
-                                    <option value="Reserved" selected="@(copy.Status == "Reserved")">Reserved</option>
-                                </select>
-                                <button type="submit" class="jy-btn-secondary p-1" style="height: 32px; font-size: 11px;">Save</button>
-                            </form>
-                        </td>
-                        <td>
-                            @if (copy.Status == "Available")
-                            {
-                                <span class="jy-badge jy-badge-available">
-                                    <span class="jy-badge-dot"></span> Available
-                                </span>
-                            }
-                            else if (copy.Status == "Borrowed")
-                            {
-                                <span class="jy-badge" style="background-color:#e2e8f0; color:#334155;">
-                                    <span class="jy-badge-dot" style="background-color:#334155;"></span> On Loan
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="jy-badge jy-badge-waiting">
-                                    <span class="jy-badge-dot"></span> Reserved
-                                </span>
-                            }
-                        </td>
+                        <td colspan="5" class="text-center text-muted py-4">No physical copies match your query.</td>
                     </tr>
                 }
             </tbody>
         </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages > 1)
+    {
+        <div class="d-flex flex-wrap justify-content-between align-items-center p-3" style="border-top: 1px solid var(--jy-border);">
+            <div style="font-size: 13.5px; color: var(--jy-text-muted);">
+                Showing <strong>@((currentPage - 1) * pageSize + 1)–@(Math.Min(currentPage * pageSize, totalCount))</strong> of <strong>@totalCount</strong> copies
+            </div>
+            <div class="d-flex gap-1 align-items-center">
+                @if (currentPage > 1)
+                {
+                    <a asp-action="Copies" asp-route-page="@(currentPage - 1)" asp-route-search="@search" asp-route-status="@selectedStatus" asp-route-condition="@selectedCond" class="jy-btn-secondary" style="height: 36px; padding: 0 14px; font-size: 13px;">← Previous</a>
+                }
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <a asp-action="Copies" asp-route-page="@i" asp-route-search="@search" asp-route-status="@selectedStatus" asp-route-condition="@selectedCond" class="@(i == currentPage ? "jy-btn-primary" : "jy-btn-secondary")" style="height: 36px; min-width: 36px; padding: 0 10px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center;">@i</a>
+                }
+                @if (currentPage < totalPages)
+                {
+                    <a asp-action="Copies" asp-route-page="@(currentPage + 1)" asp-route-search="@search" asp-route-status="@selectedStatus" asp-route-condition="@selectedCond" class="jy-btn-secondary" style="height: 36px; padding: 0 14px; font-size: 13px;">Next →</a>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Modal: Add Physical Copy -->
+<div class="modal fade" id="addCopyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background-color: var(--jy-card-bg); border: 1px solid var(--jy-border); border-radius: 10px; box-shadow: 0 20px 48px rgba(0,0,0,0.18);">
+            <div class="modal-header" style="border-bottom: 1px solid var(--jy-border); padding: 18px 24px;">
+                <h5 class="modal-title" style="font-family: var(--font-heading); color: var(--jy-primary-dark); margin: 0;">Add Physical Book Copy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="AddCopy" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body d-flex flex-column gap-3" style="padding: 24px;">
+                    <div>
+                        <label class="jy-form-label">Select Book Title *</label>
+                        <select name="bookId" required class="form-select jy-form-control">
+                            <option value="">-- Choose catalog title --</option>
+                            @foreach (var b in allBooks)
+                            {
+                                <option value="@b.BookId">@b.Title (Book #@b.BookId)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="jy-form-label">Shelf Location *</label>
+                        <input type="text" name="shelfLocation" required maxlength="20" placeholder="e.g. STACK-E-05 or SH-1105" class="form-control jy-form-control" />
+                        <div style="font-size: 12px; color: var(--jy-text-muted); margin-top: 4px;">Must be a unique shelf coordinate in the library.</div>
+                    </div>
+
+                    <div>
+                        <label class="jy-form-label">Physical Condition *</label>
+                        <select name="copyCondition" class="form-select jy-form-control">
+                            <option value="Good">Good</option>
+                            <option value="Fair">Fair</option>
+                            <option value="Poor">Poor</option>
+                            <option value="Damaged">Damaged</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--jy-border); padding: 16px 24px;">
+                    <button type="button" class="jy-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="jy-btn-primary">Add Copy to Inventory</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>

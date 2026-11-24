@@ -58,6 +58,47 @@
                 <button type="submit" class="jy-btn-primary justify-content-center">Issue Copy to Reader →</button>
             </form>
         </div>
+
+        <!-- Holds Ready for Pickup Card -->
+        <div class="jy-panel mt-4">
+            <div class="jy-panel-header">
+                <div>
+                    <div class="jy-panel-heading-title">Holds ready for pickup</div>
+                    <div class="jy-panel-heading-desc">@Model.FulfilledReservations.Count reserved copies on hold shelf</div>
+                </div>
+            </div>
+
+            @if (Model.FulfilledReservations.Any())
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var res in Model.FulfilledReservations)
+                    {
+                        <div class="p-3" style="background-color: #fffdf8; border: 1px solid var(--jy-border); border-radius: 8px;">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <div style="font-weight: 600; font-size: 14px; color: var(--jy-primary-dark);">@res.User?.Name</div>
+                                    <div style="font-size: 12px; color: var(--jy-text-muted);">Reader #@res.UserId · @res.Book?.Title</div>
+                                </div>
+                                <span class="jy-badge jy-badge-available">Copy #@res.FulfilledCopyId</span>
+                            </div>
+                            <form asp-action="CheckOutReservation" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="reservationId" value="@res.ReservationId" />
+                                <button type="submit" class="jy-btn-primary w-100 justify-content-center" style="height: 34px; font-size: 13px;">
+                                    Check out hold to reader →
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div style="font-size: 13px; color: var(--jy-text-muted); text-align: center; padding: 12px 0;">
+                    No held copies awaiting pickup right now.
+                </div>
+            }
+        </div>
     </div>
 
     <!-- Active Circulation Desk List -->

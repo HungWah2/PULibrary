@@ -66,6 +66,11 @@ public class BookCatalogViewModel
     public List<string> AllLanguages { get; set; } = new();
     public int TotalBooksCount { get; set; }
     public int TotalPhysicalCopiesCount { get; set; }
+
+    // Pagination
+    public int CurrentPage { get; set; } = 1;
+    public int TotalPages { get; set; } = 1;
+    public int PageSize { get; set; } = 10;
 }
 
 public class BookCatalogItemViewModel
@@ -88,6 +93,7 @@ public class CirculationDeskViewModel
     public List<User> ActiveUsers { get; set; } = new();
     public List<BookCopy> AvailableCopies { get; set; } = new();
     public List<Loan> ActiveLoans { get; set; } = new();
+    public List<Reservation> FulfilledReservations { get; set; } = new();
     public string? Message { get; set; }
     public string? Error { get; set; }
 }
