@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PULibrary.Data;
+using PULibrary.Services;
 
 namespace PULibrary.Controllers;
 
@@ -76,6 +77,7 @@ public class UserController : Controller
 
     // POST: /User/CancelReservation
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CancelReservation(int reservationId)
     {
         int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 1001;
@@ -99,6 +101,7 @@ public class UserController : Controller
 
     // POST: /User/UpdateProfile
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateProfile(int? userId, string name, string? username, string email, string phone, string? newPassword)
     {
         int targetUserId = userId ?? HttpContext.Session.GetInt32("UserId") ?? 1001;
@@ -141,9 +144,9 @@ public class UserController : Controller
             user.Phone = digits.PadRight(10, '0');
         }
 
-        if (!string.IsNullOrWhiteSpace(newPassword) && newPassword.Trim().Length >= 4)
+        if (!string.IsNullOrWhiteSpace(newPassword) && newPassword.Trim().Length >= 6)
         {
-            user.PasswordHash = newPassword.Trim();
+            user.PasswordHash = PasswordHelper.HashPassword(newPassword.Trim());
         }
 
         // Ensure updated_at > created_at for updated_after check constraint

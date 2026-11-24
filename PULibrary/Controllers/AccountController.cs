@@ -1,16 +1,22 @@
+using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PULibrary.Data;
+using PULibrary.Models;
+using PULibrary.Services;
 
 namespace PULibrary.Controllers;
 
 public class AccountController : Controller
 {
     private readonly LibraryDbContext _context;
+    private readonly IWebHostEnvironment _env;
 
-    public AccountController(LibraryDbContext context)
+    public AccountController(LibraryDbContext context, IWebHostEnvironment env)
     {
         _context = context;
+        _env = env;
     }
 
     // GET: /Account/SignIn
@@ -18,26 +24,66 @@ public class AccountController : Controller
     public async Task<IActionResult> SignIn(string? returnUrl)
     {
         ViewBag.ReturnUrl = returnUrl;
-        ViewBag.QuickUsers = await _context.Users.Include(u => u.Role).ToListAsync();
+        ViewBag.IsDevelopment = _env.IsDevelopment();
+
+        if (_env.IsDevelopment())
+        {
+            ViewBag.QuickUsers = await _context.Users.Include(u => u.Role).ToListAsync();
+        }
+        else
+        {
+            ViewBag.QuickUsers = new List<User>();
+        }
+
         return View();
     }
 
     // POST: /Account/SignIn
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> SignIn(string username, string password, string? returnUrl)
     {
-        var user = await _context.Users
-            .Include(u => u.Role)
-            .FirstOrDefaultAsync(u => u.Username.ToLower() == username.Trim().ToLower());
+        ViewBag.ReturnUrl = returnUrl;
+        ViewBag.IsDevelopment = _env.IsDevelopment();
 
-        // Basic verification (accepts standard user password or matches username)
-        if (user == null || user.Status != "Active")
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
-            ModelState.AddModelError("", "We couldn’t sign you in. Check your username and password, then try again.");
-            ViewBag.QuickUsers = await _context.Users.Include(u => u.Role).ToListAsync();
+            ModelState.AddModelError("", "Please enter both username and password.");
+            await PopulateQuickUsersIfDevelopment();
             return View();
         }
 
+        var normalizedUsername = username.Trim().ToLower();
+        var user = await _context.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.Username.ToLower() == normalizedUsername);
+
+        // Security check 1: Check account existence & Active status
+        if (user == null || user.Status != "Active")
+        {
+            ModelState.AddModelError("", "We couldn’t sign you in. Check your username and password, then try again.");
+            await PopulateQuickUsersIfDevelopment();
+            return View();
+        }
+
+        // Security check 2: Verify password using BCrypt (or legacy compatibility)
+        if (!PasswordHelper.VerifyPassword(password, user.PasswordHash, out bool needsRehash))
+        {
+            ModelState.AddModelError("", "We couldn’t sign you in. Check your username and password, then try again.");
+            await PopulateQuickUsersIfDevelopment();
+            return View();
+        }
+
+        // Seamless transparent migration: if legacy password was verified, upgrade to secure BCrypt hash
+        if (needsRehash)
+        {
+            user.PasswordHash = PasswordHelper.HashPassword(password);
+            var now = DateTime.Now;
+            user.UpdatedAt = now > user.CreatedAt ? now : user.CreatedAt.AddSeconds(1);
+            await _context.SaveChangesAsync();
+        }
+
+        // Establish secure session
         HttpContext.Session.SetInt32("UserId", user.UserId);
         HttpContext.Session.SetString("UserName", user.Name);
         HttpContext.Session.SetString("UserRole", user.Role?.RoleName ?? "Member");
@@ -58,63 +104,107 @@ public class AccountController : Controller
 
     // GET: /Account/Register
     [HttpGet]
-    public async Task<IActionResult> Register()
+    public IActionResult Register()
     {
-        ViewBag.Roles = await _context.Roles.Where(r => r.RoleId <= 2).ToListAsync();
         return View();
     }
 
     // POST: /Account/Register
     [HttpPost]
-    public async Task<IActionResult> Register(string name, string username, string email, string phone, string password, string confirmPassword, short roleId = 1)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Register(string name, string username, string email, string phone, string password, string confirmPassword)
     {
-        ViewBag.Roles = await _context.Roles.Where(r => r.RoleId <= 2).ToListAsync();
-
-        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        // 1. Validate required fields
+        if (string.IsNullOrWhiteSpace(name))
         {
-            ModelState.AddModelError("", "Please fill in all required fields (Name, Username, Password).");
-            return View();
+            ModelState.AddModelError("name", "Full name is required.");
+        }
+        else if (name.Trim().Length > 30)
+        {
+            ModelState.AddModelError("name", "Full name cannot exceed 30 characters.");
         }
 
-        if (password != confirmPassword)
+        // 2. Validate username
+        string normalizedUsername = "";
+        if (string.IsNullOrWhiteSpace(username))
         {
-            ModelState.AddModelError("", "Passwords do not match. Please verify and try again.");
-            return View();
+            ModelState.AddModelError("username", "Username is required.");
+        }
+        else
+        {
+            normalizedUsername = username.Trim().ToLower();
+            if (normalizedUsername.Length < 3 || normalizedUsername.Length > 20)
+            {
+                ModelState.AddModelError("username", "Username must be between 3 and 20 characters.");
+            }
+            else if (!Regex.IsMatch(normalizedUsername, @"^[a-z0-9_.-]+$"))
+            {
+                ModelState.AddModelError("username", "Username can only contain letters, numbers, dots, hyphens, and underscores.");
+            }
+            else
+            {
+                var exists = await _context.Users.AnyAsync(u => u.Username.ToLower() == normalizedUsername);
+                if (exists)
+                {
+                    ModelState.AddModelError("username", $"The username '{username.Trim()}' is already taken. Please choose another.");
+                }
+            }
         }
 
-        var normalizedUsername = username.Trim().ToLower();
-        var existingUser = await _context.Users.AnyAsync(u => u.Username.ToLower() == normalizedUsername);
-        if (existingUser)
-        {
-            ModelState.AddModelError("", $"The username '{username.Trim()}' is already taken. Please choose another.");
-            return View();
-        }
-
-        // Clean & pad phone to 10 characters (schema fixed length requirement)
-        var phoneDigits = new string((phone ?? "").Where(char.IsDigit).ToArray());
-        if (phoneDigits.Length > 10) phoneDigits = phoneDigits.Substring(0, 10);
-        var paddedPhone = phoneDigits.PadRight(10, '0');
-
-        // Clean email
+        // 3. Validate email
         var cleanEmail = (email ?? "").Trim();
-        if (cleanEmail.Length > 100) cleanEmail = cleanEmail.Substring(0, 100);
         if (string.IsNullOrWhiteSpace(cleanEmail))
         {
-            cleanEmail = $"{normalizedUsername}@jingyi.lib";
+            ModelState.AddModelError("email", "Email address is required.");
+        }
+        else if (cleanEmail.Length > 100)
+        {
+            ModelState.AddModelError("email", "Email address cannot exceed 100 characters.");
+        }
+        else if (!new EmailAddressAttribute().IsValid(cleanEmail))
+        {
+            ModelState.AddModelError("email", "Please provide a valid email address (e.g. reader@example.com).");
         }
 
-        // Validate role (readers: 1 = Member, 2 = Researcher)
-        if (roleId != 1 && roleId != 2) roleId = 1;
-
-        var newUser = new PULibrary.Models.User
+        // 4. Validate phone number (must be exact 10 digits as required by database schema)
+        var phoneDigits = new string((phone ?? "").Where(char.IsDigit).ToArray());
+        if (string.IsNullOrWhiteSpace(phone) || phoneDigits.Length != 10)
         {
-            Username = normalizedUsername.Length > 20 ? normalizedUsername.Substring(0, 20) : normalizedUsername,
-            PasswordHash = password.Trim(),
-            Name = name.Trim().Length > 30 ? name.Trim().Substring(0, 30) : name.Trim(),
-            Phone = paddedPhone,
+            ModelState.AddModelError("phone", "Phone number must be exactly 10 digits (e.g. 0912345678).");
+        }
+
+        // 5. Validate password
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            ModelState.AddModelError("password", "Password is required.");
+        }
+        else if (password.Length < 6)
+        {
+            ModelState.AddModelError("password", "Password must be at least 6 characters long.");
+        }
+        else if (password != confirmPassword)
+        {
+            ModelState.AddModelError("confirmPassword", "Passwords do not match. Please verify and try again.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View();
+        }
+
+        // Security check: newly registered users are ALWAYS assigned RoleId = 1 (Member / Reader).
+        // Higher privileges (Researcher, Librarian, Admin) must be granted by administrators in the portal.
+        const short standardMemberRoleId = 1;
+
+        var newUser = new User
+        {
+            Username = normalizedUsername,
+            PasswordHash = PasswordHelper.HashPassword(password),
+            Name = name.Trim(),
+            Phone = phoneDigits,
             Email = cleanEmail,
             Status = "Active",
-            RoleId = roleId,
+            RoleId = standardMemberRoleId,
             CreatedAt = DateTime.Now
         };
 
@@ -134,10 +224,16 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Catalog");
     }
 
-    // Quick switch session for testing convenience
+    // Quick switch session for testing convenience - STRICTLY LIMITED TO DEVELOPMENT ENVIRONMENT
     [HttpGet]
     public async Task<IActionResult> QuickSwitch(int id, string? returnUrl)
     {
+        // Block quick switch entirely in production / staging
+        if (!_env.IsDevelopment())
+        {
+            return NotFound();
+        }
+
         var user = await _context.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.UserId == id);
         if (user != null)
         {
@@ -159,11 +255,32 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Catalog");
     }
 
-    // GET: /Account/SignOut or /Account/Logout
-    [HttpGet]
+    // POST: /Account/SignOut (Secured with CSRF)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public new IActionResult SignOut()
     {
         HttpContext.Session.Clear();
         return RedirectToAction(nameof(SignIn));
+    }
+
+    // GET: /Account/SignOut or /Account/Logout fallback
+    [HttpGet]
+    public IActionResult Logout()
+    {
+        HttpContext.Session.Clear();
+        return RedirectToAction(nameof(SignIn));
+    }
+
+    private async Task PopulateQuickUsersIfDevelopment()
+    {
+        if (_env.IsDevelopment())
+        {
+            ViewBag.QuickUsers = await _context.Users.Include(u => u.Role).ToListAsync();
+        }
+        else
+        {
+            ViewBag.QuickUsers = new List<User>();
+        }
     }
 }

@@ -181,7 +181,10 @@
                     <span class="jy-session-time">@DateTime.Now.ToString("dddd, dd MMMM yyyy · HH:mm")</span>
                     <span class="jy-session-divider"></span>
                     <span class="jy-session-badge">@initials · @userRole</span>
-                    <a asp-controller="Account" asp-action="SignOut" class="jy-btn-secondary ms-2" style="font-size: 13.5px; font-weight: 600; padding: 6px 14px;">Log out</a>
+                    <form asp-controller="Account" asp-action="SignOut" method="post" class="d-inline ms-2">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="jy-btn-secondary" style="font-size: 13.5px; font-weight: 600; padding: 6px 14px; border: 1px solid var(--jy-border);">Log out</button>
+                    </form>
                 </div>
             </header>
 

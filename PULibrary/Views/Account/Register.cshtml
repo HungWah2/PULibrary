@@ -261,6 +261,7 @@
                     }
 
                     <form asp-action="Register" method="post" class="d-flex flex-column gap-3">
+                        @Html.AntiForgeryToken()
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
                                 <label class="jy-form-label" style="font-size: 14.5px; font-weight: 600; margin-bottom: 6px;">Full name <span class="text-danger">*</span></label>
@@ -284,22 +285,15 @@
                         </div>
 
                         <div>
-                            <label class="jy-form-label" style="font-size: 14.5px; font-weight: 600; margin-bottom: 6px;">Reader account type</label>
-                            <div class="jy-role-select">
-                                <label class="jy-role-option">
-                                    <input type="radio" name="roleId" value="1" checked />
+                            <label class="jy-form-label" style="font-size: 14.5px; font-weight: 600; margin-bottom: 6px;">Reader card membership</label>
+                            <div class="p-3" style="background-color: #fffdf8; border: 1px solid var(--jy-border); border-radius: 8px;">
+                                <div class="d-flex align-items-center justify-content-between">
                                     <div>
-                                        <div style="font-size: 14px; font-weight: 600; color: var(--jy-primary-dark);">Member</div>
-                                        <div style="font-size: 13px; color: #525c4e;">Standard reader borrowing</div>
+                                        <div style="font-size: 14.5px; font-weight: 600; color: var(--jy-primary-dark);">Standard Reader Membership (Member)</div>
+                                        <div style="font-size: 13px; color: var(--jy-text-muted);">Standard borrowing privileges. Staff can upgrade privileges to Researcher upon verification.</div>
                                     </div>
-                                </label>
-                                <label class="jy-role-option">
-                                    <input type="radio" name="roleId" value="2" />
-                                    <div>
-                                        <div style="font-size: 14px; font-weight: 600; color: var(--jy-primary-dark);">Researcher</div>
-                                        <div style="font-size: 13px; color: #525c4e;">Extended loan privileges</div>
-                                    </div>
-                                </label>
+                                    <span class="jy-badge jy-badge-available">Default</span>
+                                </div>
                             </div>
                         </div>
 

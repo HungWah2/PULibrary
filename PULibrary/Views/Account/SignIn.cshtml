@@ -251,6 +251,7 @@
                     }
 
                     <form asp-action="SignIn" method="post" class="d-flex flex-column gap-3">
+                        @Html.AntiForgeryToken()
                         <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
 
                         <div>
@@ -273,21 +274,24 @@
                         </div>
                     </form>
 
-                    <!-- Quick Switch chips for grading / testing -->
-                    <div style="margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--jy-border);">
-                        <div style="font-size: 13px; font-weight: 700; color: var(--jy-text-muted); margin-bottom: 12px; letter-spacing: 0.04em;">
-                            QUICK LOGIN (DEMO PROFILES):
+                    @if (ViewBag.IsDevelopment == true && quickUsers.Any())
+                    {
+                        <!-- Quick Switch chips for grading / testing (Development Environment Only) -->
+                        <div style="margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--jy-border);">
+                            <div style="font-size: 13px; font-weight: 700; color: var(--jy-text-muted); margin-bottom: 12px; letter-spacing: 0.04em;">
+                                QUICK LOGIN (DEV DEMO PROFILES):
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var u in quickUsers)
+                                {
+                                    <a asp-action="QuickSwitch" asp-route-id="@u.UserId" class="jy-quick-chip">
+                                        <strong>@u.Name</strong>
+                                        <span style="font-size: 12.5px; color: var(--jy-text-muted);">(@u.Role?.RoleName)</span>
+                                    </a>
+                                }
+                            </div>
                         </div>
-                        <div class="d-flex flex-wrap gap-2">
-                            @foreach (var u in quickUsers)
-                            {
-                                <a asp-action="QuickSwitch" asp-route-id="@u.UserId" class="jy-quick-chip">
-                                    <strong>@u.Name</strong>
-                                    <span style="font-size: 12.5px; color: var(--jy-text-muted);">(@u.Role?.RoleName)</span>
-                                </a>
-                            }
-                        </div>
-                    </div>
+                    }
                 </div>
 
                 <!-- Footer -->
